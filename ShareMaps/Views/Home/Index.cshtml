@@ -1,0 +1,652 @@
+﻿@model ShareMaps.Models.HomeIndexViewModel
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<!--BootstrapDialog-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.7/css/bootstrap-dialog.min.css">-->
+<!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.7/js/bootstrap-dialog.min.js"></script>-->
+<!--bootstrap-toggle-->
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+<!--jquery confirm-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
+
+
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+<div class="row">
+    @if (Request.IsAuthenticated)
+    {
+        <div class="w3-sidebar w3-bar-block w3-card w3-animate-left" style="display:none" id="mySidebar">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4 style="display:inline-block;float:left">標籤顯示</h4>
+                    <button class="btn btn-default pull-right" onclick="w3_close()">&times;</button>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="input-group">
+                    <label id="markerAll" class="checkbox-inline">地圖全部</label>
+                    <input id="filterAll" type="checkbox" data-toggle="toggle" data-on="顯示" data-off="隱藏">
+                </div>
+                <div class="input-group">
+                    <label id="markerUser" class="checkbox-inline">我的全部</label>
+                    <input id="filterUser" type="checkbox" checked data-toggle="toggle" data-on="顯示" data-off="隱藏">
+                </div>
+            </div>
+            <hr class="col-md-12"/>
+            <div id="tagManageArea" style="display:none" class="col-md-12">
+                <a class="btn btn-link" data-toggle="modal" data-target="#ModalTagsManage" href='@Url.Action("TagsManagement")'><h4>標籤管理</h4></a>
+                <div id="FilterTagArea" class="col-md-12 list-group">
+                    <div class="list-group" id="list-tab" role="tablist">
+                        @foreach (var item in Model.tags)
+                        {
+                            if (item.tag != null)
+                            {
+                                <button id="@item.tag.Id" type="button" class="list-group-item">@item.tag.Name (@item.count)</button>}
+                            else
+                            {
+                                <button id="-1" type="button" class="list-group-item">未標記 (@item.count)</button>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="main">
+            <div class="btn-toolbar">
+                <div class="btn-group col">
+                    <button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">篩選條件</button>
+                    @*<button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">&#9776;</button>
+                    <button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">&#9776;</button>*@
+                </div>
+                <div class="input-group col-md-11">
+                    @Html.TextBox("TextAddressSearching", null, new { @class = "form-control", placeholder = "輸入地址", id = "TextAddressSearching" })
+                    <div class="input-group-btn">
+                        <button id="ButtonAddressSearching" class="btn btn-default" type="button">
+                            <i class="glyphicon glyphicon-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="map" style="width:100%;height:100vh;"></div>
+        </div>
+        @*<div class="col-md-3">
+
+                        <h4>標籤顯示</h4>
+                            <div class="col-md-12">
+                                <label class="checkbox-inline">
+                                    <input id="filterAll" type="checkbox" data-toggle="toggle" data-on="顯示" data-off="隱藏">
+                                    全部
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input id="filterUser" type="checkbox" checked data-toggle="toggle" data-on="顯示" data-off="隱藏">
+                                    @User.Identity.Name.Substring(0, 1)
+                                </label>
+                            </div>
+                            <hr />
+                            <div id="tagManageArea" style="display:none">
+                                <a class="btn btn-link" data-toggle="modal" data-target="#ModalTagsManage" href='@Url.Action("TagsManagement")'><h4>標籤管理</h4></a>
+                                <div id="FilterTagArea" class="col-md-12 list-group">
+                                    <div class="list-group" id="list-tab" role="tablist">
+                                        @foreach (var item in Model.tags)
+                                        {
+                                            <button id="@item.Id" type="button" class="list-group-item">@item.Name</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                </div>
+            <div class="col-md-9">
+                <div class="input-group">
+                    @Html.TextBox("TextAddressSearching", null, new { @class = "form-control", placeholder = "輸入商店資訊", id = "TextAddressSearching" })
+                    <div class="input-group-btn">
+                        <button id="ButtonAddressSearching" class="btn btn-default" type="button">
+                            <i class="glyphicon glyphicon-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="map" style="width:100%;height:100vh;"></div>
+            </div>*@
+    }
+    else
+    {
+        <div class="col-md-12">
+            <div class="input-group">
+                @Html.TextBox("TextAddressSearching", null, new { @class = "form-control", placeholder = "輸入商店資訊", id = "TextAddressSearching" })
+                <div class="input-group-btn">
+                    <button id="ButtonAddressSearching" class="btn btn-default" type="button">
+                        <i class="glyphicon glyphicon-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="map" style="width:100%;height:100vh;"></div>
+        </div>
+    }
+</div>
+
+<div id="ModalTagsManage" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        </div>
+    </div>
+</div>
+
+<div id="ModalStoreManage" class="modal fade">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+        </div>
+    </div>
+</div>
+
+@*BootstrapDialog modal*@
+@*<div class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title">Modal title</h4>
+                </div>
+                <div class="modal-body">
+                    <p>One fine body…</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>*@
+
+<script>
+    function w3_open() {
+        document.getElementById("main").style.marginLeft = "25%";
+        document.getElementById("mySidebar").style.width = "25%";
+        document.getElementById("mySidebar").style.display = "block";
+        document.getElementById("openNav").style.display = 'none';
+    }
+    function w3_close() {
+        document.getElementById("main").style.marginLeft = "0%";
+        document.getElementById("mySidebar").style.display = "none";
+        document.getElementById("openNav").style.display = "inline-block";
+    }
+</script>
+
+<script>
+
+    $('#ModalTagsManage').on("shown.bs.modal", function () {
+        //$(this).hide().show();
+    });
+
+    $("#ModalTagsManage").on('hidden.bs.modal', function () {
+        //結束標籤管理頁面重新載入標籤清單
+        SetFilterTagArea();
+        $(this).data('bs.modal', null);
+    });
+
+    $("#ModalStoreManage").on('hidden.bs.modal', function () {
+        $(this).data('bs.modal', null);
+    });
+
+    function SetFilterTagArea() {
+        $.ajax({
+            url: '@Url.Action("GetTagsLsit")',
+            type: "GET",
+            success: function (result) {
+                if (result) {
+                    if (result.status) {
+                        $("#list-tab").empty();
+                        $.each(result.data, function (i, item) {
+                            $('<button/>', { 'id': item.id, 'type': 'button', 'text': item.name }).addClass('list-group-item').appendTo("#list-tab");
+                        });
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+                else {
+                    alert('沒有回應');
+                }
+            }
+        });
+    }
+</script>
+
+@*GoogleMap Api*@
+<script>
+    var map, currentMarker, targetMarker, targetInfoWindow, targetLatLng;
+    //1 = open; -1 = close;
+    var targetInfowindow = 1;
+    function initMap() {
+        //default 台北火車站 (121.5142306, 25.0487345)
+        targetLatLng = { lat: 25.0487345, lng: 121.5142306 };
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: targetLatLng,
+            zoom: 17,
+            mapTypeControl: false
+        });
+
+        @if (Request.IsAuthenticated)
+        {
+            <Text>
+            //目標標記
+            targetMarker = new google.maps.Marker({
+                map: map,
+                position: targetLatLng,
+                draggable: true,
+                animation: google.maps.Animation.DROP
+            });
+
+                //綁定目標標記的InfoWindow
+            infowindow = new google.maps.InfoWindow({
+                content: '<a id="LinkStoreCreate" data-toggle="modal" data-target="#ModalStoreManage" href="@Url.Action("StoreCreate", new { Lat = "25.0487345", Lng = "121.5142306", Address = "103台灣台北市大同區鄭州路8號" })">新增</a>'
+            });
+            infowindow.open(map, targetMarker);
+
+                //targetMarker 拖拉事件
+            google.maps.event.addListener(targetMarker, 'dragend', function () {
+                //if (targetInfowindow < 0) {
+                //    targetInfowindow = 1;
+                //    infowindow.open(map, targetMarker);
+                //}
+                latLngToAddress(targetMarker.getPosition());
+            });
+            google.maps.event.addListener(targetMarker, 'click', function () {
+                infowindow.close();
+                infowindow.open(map, targetMarker);
+            });
+        </Text>
+        }
+
+
+        ////點擊目標標記的顯示InfoWindow狀態
+        //targetMarker.addListener('click', function () {
+        //    if (targetInfowindow < 0) {
+        //        targetInfowindow = 1;
+        //        infowindow.open(map, targetMarker);
+        //    } else {
+        //        targetInfowindow = -1;
+        //        infowindow.close();
+        //    }
+        //});
+
+
+        //Marker position_changed EVENT
+        //google.maps.event.addListener(targetMarker, "position_changed", function () {
+        //});
+
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                targetLatLng.lat = position.coords.latitude;
+                targetLatLng.lng = position.coords.longitude;
+                //取得目前位置
+                currentMarker = new google.maps.Marker({
+                    map: map,
+                    position: targetLatLng,
+                    title: '你的位置',
+                    icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                        strokeColor: '#4169E1',
+                        strokeWeight: 5,
+                        fillOpacity: 1,
+                        scale: 1
+                    }
+            });
+            latLngToAddress(targetLatLng);
+            @if (Request.IsAuthenticated)
+                {
+                    @:targetMarkerSetting(targetLatLng);
+                }
+                mapSetting(targetLatLng);
+            }, function () {
+                handleLocationError(true, map.getCenter());
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, map.getCenter());
+        }
+
+        function handleLocationError(browserHasGeolocation, pos) {
+            var errorMarker = new google.maps.Marker({
+                map: map,
+            });
+            errorMarker.setPosition(pos);
+            errorMarker.title = (browserHasGeolocation ?
+                '定位失敗' :
+                '瀏覽器不支援定位');
+        }
+
+        //載入dbMarker
+        @{ 
+            var jsonData = from s in Model.stores
+                           select new
+                           {
+                               canEditDelete = s.canEditDelete,
+                               id = s.store.Id,
+                               name = s.store.Name,
+                               address = s.store.Address,
+                               phoneNumber = s.store.PhoneNumber,
+                               description = Html.Encode(s.store.Description).Replace(Environment.NewLine, "<br />"),
+                               shareTime = s.store.ShareTime,
+                               lat = s.store.Lat,
+                               lng = s.store.Lng,
+                               photos = from p in s.storePhotos
+                                        select new
+                                        {
+                                            filename = Path.GetFileName(p.Path),
+                                            path = Url.Content("~" + p.Path),
+                                            isMain = p.IsMain,
+                                            sequence = p.Sequence
+                                        }
+                           };
+            @:createDbMarker(@Request.IsAuthenticated.ToString().ToLower(), @MvcHtmlString.Create(Json.Encode(jsonData)));
+        }
+    }
+
+    //地址搜尋事件
+    $('#TextAddressSearching').keyup(function (event) {
+        if (event.keyCode === 13) {
+            $('#ButtonAddressSearching').click();
+        }
+    });
+    $('#ButtonAddressSearching').click(function () {
+        var address = $('#TextAddressSearching').val();
+        if (address != '') {
+            addressToLatLng(address);
+        }
+    });
+
+    //{lat, lng} 轉換成地址
+    function latLngToAddress(resultLatLng) {
+        geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ latLng: resultLatLng }, function (results, status) {
+            var address = ''
+            if (status == google.maps.GeocoderStatus.OK) {
+                $('#TextAddressSearching').val(results[0].formatted_address);
+                address = results[0].formatted_address;
+            }
+            else {
+                //查無地址
+                $('#TextAddressSearching').val('');
+            }
+            createUrl(resultLatLng, address);
+        });
+    }
+
+    function addressToLatLng(resultAddress) {
+        geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ 'address': resultAddress }, function (results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                @if (Request.IsAuthenticated)
+                {
+                    //設定targetMarker
+                    @:targetMarkerSetting(results[0].geometry.location);
+                }
+                //設定地圖中心
+                mapSetting(results[0].geometry.location);
+                //新的URL
+                createUrl(results[0].geometry.location, resultAddress);
+            } else {
+                alert('地址查詢失敗，原因: ' + status);
+            }
+        });
+    }
+
+    function createUrl(resultLatLng, resultAddress) {
+        var address = encodeURIComponent(resultAddress);
+        var url = '@Html.Raw(Url.Action("StoreCreate", new { Lat = "__Lat__", Lng = "__Lng__", Address = "__Address__" }))';
+        var params = url.replace('__Lat__', resultLatLng.lat).replace('__Lng__', resultLatLng.lng).replace('__Address__', address);
+        $('#LinkStoreCreate').attr("href", params);
+    }
+
+    //全域變數 targetMarker 設定
+    function targetMarkerSetting(resultLatLng) {
+        targetMarker.map = map;
+        targetMarker.setPosition(resultLatLng);
+        targetMarker.animation = google.maps.Animation.DROP;
+    }
+
+    //全域變數 map 設定
+    function mapSetting(resultCenterLatLng) {
+        map.zoom = 17;
+        map.setCenter(resultCenterLatLng);
+    }
+
+    var dbMarkerArrAll = [];
+    var dbMarkerArrUser = [];
+    function createDbMarker(isAuthenticated, data) {
+        var dbInfowindow = new google.maps.InfoWindow({ content: '' });
+        $.each(data, function (i, item) {
+            var dbMarker = new google.maps.Marker({
+                position: new google.maps.LatLng(item.lat, item.lng),
+                map: map,
+                title: item.name,
+                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            });
+            var editDeleteArea = '<div>';
+            if (isAuthenticated) {
+                if (item.canEditDelete) {
+                    //有登入又是自己的
+                    dbMarker.setMap(map);
+                    dbMarkerArrUser.push(dbMarker);
+                    editDeleteArea = '<a data-toggle="modal" data-target="#ModalStoreManage" href="/Home/StoreEdit/' + item.id + '">[編輯]</a>'
+                        + '<a class="remove-marker" data-marker-lat="' + item.lat + '" data-marker-lng="' + item.lng + '">[刪除]</a>';
+                }
+                else {
+                    //有登入不是自己的
+                    dbMarker.setMap(null);
+                    dbMarkerArrAll.push(dbMarker);
+                }
+            }
+            else {
+                //沒有登入
+                dbMarker.setMap(map);
+                dbMarkerArrAll.push(dbMarker);
+            }
+            editDeleteArea += '</div>';
+
+            var photos = '<div>';
+            $.each(item.photos, function (i, photo) {
+                photos += '<img width="100px" src="' + photo.path + '" alt="' + photo.filename + '">'
+            });
+            photos += '</div>';
+
+            var editHtml = '<div id="dbMarker' + item.id + '" class="infoDiv" value="' + item.id + '">'
+                + '<h4 class="name">' + item.name + '</h4>'
+                + '<div>'
+                + '<label>地址:</label>'
+                + '<label class="address">' + item.address + '</label>'
+                + '</div>'
+                + '<div>'
+                + '<label>電話:</label>'
+                + '<label class="phonenumber">' + item.phoneNumber + '</label>'
+                + '</div>'
+                + '<div>'
+                + '<label>備註:</label>'
+                + '<p class="description">' + item.description + '</p>'
+                + '</div>'
+                + '<div>'
+                + '<label>分享次數:</label>'
+                + '<label class="sharetime">' + item.shareTime + '</label>'
+                + '</div>'
+                + '<div class="photos">'
+                + photos
+                + '</div>'
+                + '<div>'
+                + editDeleteArea
+                + '</div>'
+                + '</div> ';
+
+            google.maps.event.addListener(dbMarker, 'click', function () {
+                dbInfowindow.close();
+                dbInfowindow = new google.maps.InfoWindow({ content: editHtml });
+                dbInfowindow.open(map, dbMarker);
+            });
+        });
+        countMarker();
+    }
+
+    //FilterMarker
+    $(function () {
+        $('#filterAll').change(function () {
+            markerVisible(dbMarkerArrAll, $(this).prop('checked'));
+        })
+    })
+    $(function () {
+        $('#filterUser').change(function () {
+            markerVisible(dbMarkerArrUser, $(this).prop('checked'));
+            if ($(this).prop('checked')) {
+                $('#tagManageArea').hide();
+                $('#list-tab').find('.active').removeClass('active');
+            }
+            else {
+                $('#tagManageArea').show();
+            }
+        })
+    })
+
+    function markerVisible(markerArr, visible) {
+        for (i = 0; i < markerArr.length; i++) {
+            if (visible) {
+                markerArr[i].setMap(map);
+            }
+            else {
+                markerArr[i].setMap(null);
+            }
+        }
+    }
+
+    function countMarker() {
+        $('#markerAll').text('地圖全部(' + (dbMarkerArrAll.length + dbMarkerArrUser.length) + ')');
+        $('#markerUser').text('我的全部(' + dbMarkerArrUser.length + ')');
+    }
+
+    //Click TagList 載入並顯示清單
+    $(document).on('click', '.list-group-item', function () {
+        var $this = $(this);
+        $('.active').removeClass('active');
+        $this.toggleClass('active');
+        loadTagMarker($this.prop('id'));
+    });
+
+    //新增或修改後重新載入目前選擇的Tag以及要顯示的清單
+    function showCurrentTagMarker() {
+        if ($('#filterUser').prop('checked') == false) {
+            var $activedTag = $('#list-tab').find('.active');
+            if ($activedTag) {
+                loadTagMarker($activedTag.prop('id'));
+            }
+        }
+    }
+
+    //取得Tag清單並顯示
+    function loadTagMarker(id) {
+        $.ajax({
+            url: '/Home/GetVisibleMarker/' + id,
+            dataType: "json",
+            type: "GET",
+            contentType: 'application/json; charset=utf-8',
+            async: true,
+            processData: false,
+            cache: false,
+            success: function (result) {
+                console.log(result.message);
+                if (result) {
+                    if (result.status) {
+                        tagMarkerVisible(result.data);
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+                else {
+                    alert('沒有回應');
+                }
+            }
+        });
+    }
+    //(顯示/隱藏)回傳的清單
+    function tagMarkerVisible(resultData) {
+        if (resultData) {
+            for (var i = 0; i < dbMarkerArrUser.length; i++) {
+                var mapLat = dbMarkerArrUser[i].getPosition().lat().toString().substring(0, 8);
+                var mapLng = dbMarkerArrUser[i].getPosition().lng().toString().substring(0, 8);
+                for (var j = 0; j < resultData.length; j++) {
+                    var dbLat = resultData[j].lat.toString().substring(0, 8);
+                    var dbLng = resultData[j].lng.toString().substring(0, 8);
+                    if (mapLat == dbLat && mapLng == dbLng) {
+                        dbMarkerArrUser[i].setMap(map);
+                        break;
+                    }
+                    else {
+                        dbMarkerArrUser[i].setMap(null);
+                    }
+                }
+            }
+        }
+        else {
+            markerVisible(dbMarkerArrUser, false);
+        }
+    }
+
+    //處理刪除Marker
+    $(document).on("click", ".remove-marker", function () {
+        var token = '@Html.AntiForgeryToken()';
+        token = $(token).val();
+        var storeId = $(this).parent().parent().attr('value');
+        var storeName = $(this).parent().parent().find('.name').text();
+        var lat = $(this).data("marker-lat");
+        var lng = $(this).data("marker-lng");
+        $.confirm({
+            title: '提示',
+            content: '<p>是否刪除地點《' + storeName + '》?</p>',
+            buttons: {
+                cancel: {
+                    text: '取消',
+                    action: function () {
+                    }
+                },
+                confirm: {
+                    text: '確定',
+                    btnClass: 'btn btn-danger delete',
+                    action: function () {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Home/StoreDelete',
+                            data: { __RequestVerificationToken: token, id: storeId },
+                            success: function (result) {
+                                if (result) {
+                                    if (result.status) {
+                                        var dbLat = lat.toString().substring(0, 8);
+                                        var dbLng = lng.toString().substring(0, 8);
+                                        for (i = 0; i < dbMarkerArrUser.length; i++) {
+                                            var mapLat = dbMarkerArrUser[i].getPosition().lat().toString().substring(0, 8);
+                                            var mapLng = dbMarkerArrUser[i].getPosition().lng().toString().substring(0, 8);
+                                            if (mapLat == dbLat && mapLng == dbLng) {
+                                                dbMarkerArrUser[i].setMap(null);
+                                            }
+                                        }
+                                        alert(result.message);
+                                        countMarker();
+                                    }
+                                    else {
+                                        alert(result.message);
+                                    }
+                                }
+                                else {
+                                    alert('沒有回應');
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    });
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWkE_DUPpXUIGPeO9MpePyT4tUabnUvxk&callback=initMap">
+</script>

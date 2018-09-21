@@ -1,0 +1,218 @@
+﻿@model ShareMaps.Models.StoreEditViewModel
+
+@using (Html.BeginForm("StoreEdit", "Home", FormMethod.Post, new { @class = "form-horizontal", role = "form", id = "FormStoreEdit" }))
+{
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">編輯地點</h4>
+    </div>
+    <div class="modal-body">
+        @Html.AntiForgeryToken()
+
+        <div class="form-group row">
+            @Html.LabelFor(m => m.store.Name, new { @class = "col-md-2 col-md-offset-1 control-label" })
+            <div class="col-md-8">
+                @Html.TextBoxFor(m => m.store.Name, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.store.Name, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group row">
+            @Html.LabelFor(m => m.store.Address, new { @class = "col-md-2 col-md-offset-1 control-label" })
+            <div class="col-md-8">
+                @Html.TextBoxFor(m => m.store.Address, new { @class = "form-control", id = "Address" })
+            </div>
+        </div>
+        <div class="form-group row">
+            @Html.LabelFor(m => m.store.PhoneNumber, new { @class = "col-md-2 col-md-offset-1 control-label" })
+            <div class="col-md-8">
+                @Html.TextBoxFor(m => m.store.PhoneNumber, new { @class = "form-control" })
+            </div>
+        </div>
+        <div class="form-group row">
+            @Html.LabelFor(m => m.store.Description, new { @class = "col-md-2 col-md-offset-1 control-label" })
+            <div class="col-md-8">
+                @Html.TextAreaFor(m => m.store.Description, new { @class = "form-control", rows = 5 })
+            </div>
+        </div>
+        <div class="form-group row">
+            @Html.Label("圖片", "圖片", new { @class = "col-md-2 col-md-offset-1 control-label" })
+            <div class="col-md-8">
+                <input id="photos" name="photos" type="file" data-preview-file-type="text" multiple class="file-loading" accept="image/*" />
+            </div>
+        </div>
+        <div>
+            @Html.HiddenFor(m => m.store.Lat)
+            @Html.HiddenFor(m => m.store.Lng)
+        </div>
+        <hr />
+        <h4>標籤</h4>
+        <div id="StoreTagArea">
+            @for (var i = 0; i < Model.storeTags.Count; i++)
+            {
+                <label class="checkbox-inline">
+                    @Html.CheckBoxFor(m => m.storeTags[i].isChecked)
+                    @Html.DisplayFor(m => m.storeTags[i].tag.Name)
+                    @Html.HiddenFor(m => m.storeTags[i].tag.Id)
+                    @Html.HiddenFor(m => m.storeTags[i].tag.Name)
+                </label>
+            }
+        </div>
+        @Html.HiddenFor(m => m.store.Id)
+    </div>
+    <div class="modal-footer">
+        @*<button id="ButtonEditCancel" type="button" class="btn btn-default" data-dismiss="modal">取消</button>*@
+        <input type="submit" class="btn btn-primary" value="完成" />
+    </div>
+}
+
+@Scripts.Render("~/bundles/jqueryval")
+@Scripts.Render("~/bundles/bootstrap-fileinput")
+
+<script>
+    var $files = $('#photos');
+
+    var urls = [];
+    @foreach (var item in Model.storePhotos)
+    {
+        <text>
+    urls.push('@Url.Content("~" + item.Path)');
+    </Text>
+    }
+    var jsonData;
+    @{
+        var config = from sp in Model.storePhotos
+                     select new
+                     {
+                         caption = Path.GetFileName(sp.Path),
+                         url = Url.Action("FileDelete", "Home", new { id = sp.Id }),
+                         key = Path.GetFileName(sp.Path),
+                         width = "120px"
+                     };
+        var jData = Json.Encode(config);
+        <Text>
+    jsonData = @MvcHtmlString.Create(jData);
+    </Text>
+     }
+
+    @*var iniJson;
+    @{
+        var iniConfig = from sp in Model.storePhotos
+                        select new
+                        {
+                            initialPreview = Url.Content("~" + sp.Path),
+                            initialPreviewConfig = new[] {
+                                    new {
+                                        caption = Path.GetFileName(sp.Path),
+                                        url = Url.Action("FileDelete", "Home", new { id = sp.Id }),
+                                        key =Path.GetFileName(sp.Path),
+                                        width = "120px"
+                                    }
+                                },
+                            append = true
+                        };
+        <Text>
+    iniJson = @MvcHtmlString.Create(Json.Encode(iniConfig));
+    </Text>
+        }*@
+
+
+    $files.fileinput({
+        language: "zh-TW",
+        uploadUrl: '/Home/FileUpload/@Model.store.Id',
+        uploadAsync: true,
+        showUpload: false,
+        showRemove: false,
+        minFileCount: 1,
+        maxFileCount: 10,
+        previewFileType: "image",
+        browseClass: "btn btn-success",
+        browseLabel: "選擇圖片",
+        browseIcon: "<i class=\"glyphicon glyphicon-picture\"></i> ",
+        initialPreview: urls,
+        initialPreviewAsData: true,
+        initialPreviewConfig: jsonData,
+        overwriteInitial: false
+    }).on("filebatchselected", function (event, files) {
+        $files.fileinput("upload");
+    }).on("fileuploaded", function (event, data, previewId, index) {
+        var result = data.response;
+    }).on('filedeleted', function (event, key, data) {
+        var result = data.responseJSON;
+    });
+    
+    //會POST到Controller
+    //要加入前端驗證
+    $("#FormStoreEdit").submit(function (e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+
+        $.ajax({
+            url: '@Url.Action("StoreEdit")',
+            type: 'POST',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (result) {
+                if (result) {
+                    if (result.status) {
+                        $('#FormStoreEdit')[0].reset();
+                        $('#ModalStoreManage').modal('hide');
+                        var photos = '<div>';
+                        $.each(result.data.photos, function (i, item) {
+                            photos += '<img width="100px" src="' + item.path + '" alt="' + item.filename + '">'
+                        });
+                        photos += '</div>';
+                        var dbMarker = $('#dbMarker' + result.data.id);
+                        dbMarker.find('h4').text(result.data.name);
+                        dbMarker.find('.address').text(result.data.address);
+                        dbMarker.find('.phonenumber').text(result.data.phonenumber);
+                        dbMarker.find('.description').html(result.data.description);
+                        dbMarker.find('.sharetime').text(result.data.sharetime);
+                        dbMarker.find('.photos').html(photos);
+                        showCurrentTagMarker();
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+                else {
+                    alert(result.message);
+                }
+            }
+        });
+    });
+
+    //使用Ajax.Beginform (重複POST)
+    //function Success(result) {
+    //    if (result) {
+    //        if (result.status) {
+    //            $('#FormStoreEdit')[0].reset();
+    //            $('#ModalStoreManage').modal('hide');
+    //            var photos = '<div>';
+    //            $.each(result.data.photos, function (i, item) {
+    //                photos += '<img width="100px" src="' + item.path + '" alt="' + item.filename + '">'
+    //            });
+    //            photos += '</div>';
+    //            var dbMarker = $('#dbMarker' + result.data.id);
+    //            dbMarker.find('h4').text(result.data.name);
+    //            dbMarker.find('.address').text(result.data.address);
+    //            dbMarker.find('.phonenumber').text(result.data.phonenumber);
+    //            dbMarker.find('.description').html(result.data.description);
+    //            dbMarker.find('.sharetime').text(result.data.sharetime);
+    //            dbMarker.find('.photos').html(photos);
+    //        }
+    //        else {
+    //            alert(result.message);
+    //        }
+    //    }
+    //    else {
+    //        alert(result.message);
+    //    }
+    //}
+
+    //$("#ButtonEditCancel").click(function () {
+    //    $("#FormStoreEdit")[0].reset();
+    //    $("#ModalStoreManage").modal('hide');
+    //    });
+</script>

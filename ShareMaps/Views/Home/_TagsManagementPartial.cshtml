@@ -1,0 +1,219 @@
+﻿@model ShareMaps.Models.TagsManagementViewModel
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h4 class="modal-title">標籤管理</h4>
+</div>
+<div class="modal-body">
+    @using (Html.BeginForm("TagCreate", "Home", FormMethod.Post, new { @class = "form-horizontal", role = "form", id = "FormTagsManagement" }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="form-group row">
+            @Html.LabelFor(m => m.tags.Name, new { @class = "col-md-2 col-md-offset-1 control-label" })
+            <div class="col-md-6">
+                @Html.TextBoxFor(m => m.tags.Name, new { @class = "form-control", id = "TextTagCreate" })
+                @Html.ValidationMessageFor(m => m.tags.Name, "", new { @class = "text-danger" })
+            </div>
+            @*<button id="ButtonCreateTag" type="button" class="col-md-1 btn btn-info">加入</button>*@
+            <input type="submit" class="col-md-1 btn btn-info" value="加入" />
+        </div>
+    }
+    <hr />
+    @*編輯區*@
+    <div id="EditTagArea" class="form-horizontal">
+        @for (int i = 0; i < Model.tagList.Count; i++)
+        {
+            <div id="@Model.tagList[i].Id" class="form-group">
+                <div class="col-md-8 col-md-offset-1">
+                    <label id="tagName" class="control-label title">@Model.tagList[i].Name</label>
+                    <input id="editName" type="text" class="form-control values" style="display:none" />
+                </div>
+                <button type="button" class="col-md-1 btn btn-info edit">編輯</button>
+                <button type="button" class="col-md-1 btn btn-danger delete">刪除</button>
+                <button type="button" class="col-md-1 btn btn-default cancel" style="display:none">取消</button>
+                <button type="button" class="col-md-1 btn btn-primary save" style="display:none">完成</button>
+            </div>
+        }
+
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary" data-dismiss="modal">完成</button>
+</div>
+
+@Scripts.Render("~/bundles/jqueryval")
+
+@*FormTagsManagement Script*@
+<script>
+    //會POST到Controller
+    //要加入前端驗證
+    $("#FormTagsManagement").submit(function (e) {
+        e.preventDefault();
+        var formData = new FormData(this);        
+        $.ajax({
+            type: 'POST',
+            url: '/Home/TagCreate',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (result) {
+                if (result) {
+                    if (result.status) {
+                        $('#FormTagsManagement')[0].reset();
+                        $("#EditTagArea").prepend(
+                            $('<div/>', { 'id': result.data.id, 'class': 'form-group' }).append(
+                                $('<div/>', { 'class': 'col-md-8 col-md-offset-1' }).append(
+                                    $('<label/>', { 'id': 'tagName', 'class': 'control-label title', 'text': result.data.name }),
+                                    $('<input/>', { 'id': 'editName', 'type': 'text', 'class': 'form-control values' }).hide()),
+                                $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-info edit', 'text': '編輯' }),
+                                $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-danger delete', 'text': '刪除' }),
+                                $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-default cancel', 'text': '取消' }).hide(),
+                                $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-primary save', 'text': '完成' }).hide())
+                        );
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+                else {
+                    alert('沒有回應');
+                }
+            }
+        });
+    });
+
+    //使用Ajax.Beginform (重複POST)
+    //function Success(result) {
+    //    if (result) {
+    //        if (result.status) {
+    //            $('#FormTagsManagement')[0].reset();
+    //            $("#EditTagArea").prepend(
+    //                $('<div/>', { 'id': result.data.id, 'class': 'form-group' }).append(
+    //                    $('<div/>', { 'class': 'col-md-8 col-md-offset-1' }).append(
+    //                        $('<label/>', { 'id': 'tagName', 'class': 'control-label title', 'text': result.data.name }),
+    //                        $('<input/>', { 'id': 'editName', 'type': 'text', 'class': 'form-control values' }).hide()),
+    //                    $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-info edit', 'text': '編輯' }),
+    //                    $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-danger delete', 'text': '刪除' }),
+    //                    $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-default cancel', 'text': '取消' }).hide(),
+    //                    $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-primary save', 'text': '完成' }).hide())
+    //            );
+
+    //            ////動態加入 到INDEX 的#FilterTagArea
+    //            //$("#FilterTagArea").prepend(
+    //            //    $('<label/>', { 'class': 'col-md-9', 'text': result.data.name }).prepend(
+    //            //        $('<input/>', { 'id': 'tag' + result.data.id, 'checked': true, 'type': 'checkbox' })
+    //            //    )
+    //            //);
+
+    //            //$('#tag' + result.data.id).bootstrapToggle({
+    //            //    on: '顯示',
+    //            //    off: '隱藏'
+    //            //});
+
+    //        }
+    //        else {
+    //            alert(result.message);
+    //        }
+    //    }
+    //    else {
+    //        alert(result.message);
+    //    }
+    //}
+
+    $('#EditTagArea').on('click', '.edit', function () {
+        $(this).hide();
+        var titleText = $(this).prev().find('.title').text();
+        $(this).prev().find('.title').hide();
+        $(this).prev().find('.values').val('').show();
+        $(this).prev().find('.values').attr('placeholder', titleText).show();
+        $(this).next('.delete').hide();
+        $(this).next().next('.cancel').show();
+        $(this).next().next().next('.save').show();
+    });
+
+    $('#EditTagArea').on('click', '.delete', function () {
+        var btnDelete = $(this);
+        var titleText = btnDelete.prevAll().find('.title').text();
+        $.confirm({
+            title: '提示',
+            content: '<p>是否刪除標籤《' + titleText + '》?</p><p>(使用此標籤的地點將會移除關聯)</p>',
+            buttons: {
+                cancel: {
+                    text: '取消',
+                    action: function () {
+                    }
+                },
+                confirm: {
+                    text: '確定',
+                    btnClass: 'btn btn-danger delete',
+                    action: function () {
+                        var token = $('[name=__RequestVerificationToken]').val();
+                        var tagId = btnDelete.parent().attr('id');
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Home/TagDelete',
+                            data: { __RequestVerificationToken: token, id: tagId },
+                            success: function (result) {
+                                if (result) {
+                                    if (result.status) {
+                                        btnDelete.parent().remove();
+                                    }
+                                    else {
+                                        alert(result.message);
+                                    }
+                                }
+                                else {
+                                    alert('沒有回應');
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    });
+
+    $('#EditTagArea').on('click', '.cancel', function () {
+        $(this).hide();
+        $(this).prev().prev().prev().find('.title').show();
+        $(this).prev().prev().prev().find('.values').hide();
+        $(this).prev().prev('.edit').show();
+        $(this).prev('.delete').show();
+        $(this).next('.save').hide();
+    });
+
+    $('#EditTagArea').on('click', '.save', function () {
+        var btnSave = $(this);
+        var token = $('[name=__RequestVerificationToken]').val();
+
+        var editItem = btnSave.prevAll();
+        var tagId = editItem.parent().attr('id');
+        var tagName = editItem.find('#editName').val();
+        var tagSequence = null;
+
+        $.ajax({
+            type: 'POST',
+            url: '/Home/TagEdit',
+            data: { __RequestVerificationToken: token, id: tagId, name: tagName, sequence: tagSequence },
+            success: function (result) {
+                if (result) {
+                    if (result.status) {
+                        btnSave.hide();
+                        btnSave.prevAll().find('.title').text(result.data.name).show();
+                        btnSave.prevAll().find('.values').hide();
+                        btnSave.prev().prev().prev('.edit').show();
+                        btnSave.prev().prev('.delete').show();
+                        btnSave.prev('.cancel').hide();
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+                else {
+                    alert('沒有回應');
+                }
+            }
+        });
+    });
+</script>

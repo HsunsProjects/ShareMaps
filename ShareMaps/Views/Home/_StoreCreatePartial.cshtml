@@ -1,0 +1,189 @@
+﻿@model ShareMaps.Models.StoreCreateViewModel
+
+@using (Html.BeginForm("StoreCreate", "Home", FormMethod.Post, new { @class = "form-horizontal", role = "form", id = "FormStoreCreate" }))
+{
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">新增地點</h4>
+
+    </div>
+    <div class="modal-body">
+        @Html.AntiForgeryToken()
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group row">
+                    @Html.LabelFor(m => m.store.Name, new { @class = "col-md-2 col-md-offset-1 control-label" })
+                    <div class="col-md-8">
+                        @Html.TextBoxFor(m => m.store.Name, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.store.Name, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+                <div class="form-group row">
+                    @Html.LabelFor(m => m.store.Address, new { @class = "col-md-2 col-md-offset-1 control-label" })
+                    <div class="col-md-8">
+                        @Html.TextBoxFor(m => m.store.Address, new { @class = "form-control", id = "Address" })
+                    </div>
+                </div>
+                <div class="form-group row">
+                    @Html.LabelFor(m => m.store.PhoneNumber, new { @class = "col-md-2 col-md-offset-1 control-label" })
+                    <div class="col-md-8">
+                        @Html.TextBoxFor(m => m.store.PhoneNumber, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="form-group row">
+                    @Html.LabelFor(m => m.store.Description, new { @class = "col-md-2 col-md-offset-1 control-label" })
+                    <div class="col-md-8">
+                        @Html.TextAreaFor(m => m.store.Description, new { @class = "form-control", rows = 5 })
+                    </div>
+                </div>
+                <div class="form-group row">
+                    @Html.Label("圖片", "圖片", new { @class = "col-md-2 col-md-offset-1 control-label" })
+                    <div class="col-md-8">
+                        <input id="photos" name="photos" type="file" data-preview-file-type="text" multiple class="file-loading" accept="image/*" />
+                    </div>
+                </div>
+                <div id="PhotosArea">
+                    @*紀錄上傳成功的資訊**@
+                </div>
+                <div>
+                    @Html.HiddenFor(m => m.store.Lat)
+                    @Html.HiddenFor(m => m.store.Lng)
+                </div>
+            </div>
+            <div class="col-md-12">
+                <hr />
+                <h4>標籤</h4>
+                <div id="StoreTagArea">
+                    @for (var i = 0; i < Model.storeTags.Count; ++i)
+                    {
+                        <label class="checkbox-inline">
+                            @Html.CheckBoxFor(m => m.storeTags[i].isChecked)
+                            @Html.DisplayFor(m => m.storeTags[i].tag.Name)
+                            @Html.HiddenFor(m => m.storeTags[i].tag.Id)
+                            @Html.HiddenFor(m => m.storeTags[i].tag.Name)
+                        </label>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button id="FormCancel" type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+        <input type="submit" class="btn btn-primary" value="新增" />
+    </div>
+}
+
+@Scripts.Render("~/bundles/jqueryval")
+@Scripts.Render("~/bundles/bootstrap-fileinput")
+
+<script>
+    var $files = $('#photos');
+        $files.fileinput({
+            language: "zh-TW",
+            uploadUrl: "/Home/FileUploadToTempFolder",
+            uploadAsync: true,
+            showUpload: false,
+            showRemove: false,
+            minFileCount: 1,
+            maxFileCount: 10,
+            previewFileType: "image",
+            browseClass: "btn btn-success",
+            browseLabel: "選擇圖片",
+            browseIcon: "<i class=\"glyphicon glyphicon-picture\"></i> ",
+            initialPreviewAsData: true,
+            overwriteInitial: false
+        }).on("filebatchselected", function (event, files) {
+            $files.fileinput("upload");
+        }).on('filepreupload', function (event, data, previewId, index) {
+            $(':input[type="submit"]').prop('disabled', true);
+        }).on("fileuploaded", function (event, data, previewId, index) {
+            var result = data.response;
+            $('#PhotosArea').append('<input name="filenames" id="filenames" type="hidden" value="' + result.initialPreviewConfig[0].key + '">');
+        }).on('filebatchuploadcomplete', function (event, files, extra) {
+            $(':input[type="submit"]').prop('disabled', false);
+        }).on('filedeleted', function (event, key, data) {
+            var result = data.responseJSON;
+            $('input[type="hidden"][value="' + result.data.filename + '"]').remove();
+        });
+
+    //使用Ajax.Beginform (重複POST)
+    //function Success(result) {
+    //    if (result) {
+    //        if (result.status) {
+    //            $('#FormStoreCreate')[0].reset();
+    //            $('#ModalStoreManage').modal('hide');
+    //            addDBMarker(true, result.data.id, result.data.name, result.data.address, result.data.phonenumber, result.data.description, result.data.lat, result.data.lng, result.data.sharetime, result.data.photos);
+    //        }
+    //        else {
+    //            alert(result.message);
+    //        }
+    //    }
+    //    else {
+    //        alert(result.message);
+    //    }
+    //}
+
+
+    //會POST到Controller
+    //要加入前端驗證
+    $("#FormStoreCreate").submit(function (e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+
+        $.ajax({
+            url: '@Url.Action("StoreCreate")',
+            type: 'POST',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (result) {
+                if (result) {
+                    if (result.status) {
+                        $('#FormStoreCreate')[0].reset();
+                        $('#ModalStoreManage').modal('hide');
+                        createDbMarker(true, result);
+                        showCurrentTagMarker();
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+                else {
+                    alert(result.message);
+                }
+            }
+        });
+    });
+
+    $('#FormCancel').click(function () {
+        if ($('#PhotosArea input').length > 0) {
+            $('#PhotosArea').children('input').each(function () {
+                var filename = this.value;
+                $.ajax({
+                    url: '@Url.Action("FileDeleteFromTempFolder")',
+                    type: "POST",
+                    processData: false,
+                    contentType: 'application/json',
+                    data: '{ "filename":"' + filename + '" }',
+                    async: true,
+                    success: function (result) {
+                        if (result) {
+                            if (result.status) {
+                                return true;
+                            }
+                            else {
+                                //紀錄沒刪除的檔案名
+                                return false;
+                            }
+                        }
+                        else {
+                            //紀錄沒刪除的檔案名
+                            return false;
+                        }
+                    }
+                });
+            });
+        }
+    });
+    </script>
