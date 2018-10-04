@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNet.Identity;
+using Newtonsoft.Json;
 using ShareMaps.Helpers;
 using ShareMaps.Models;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web.Mvc;
@@ -29,8 +31,9 @@ namespace ShareMaps.Controllers
                                            orderby t.Id descending
                                            select new TagCountViewModel
                                            {
-                                               tag = t,
-                                               count = t.Stores.Count
+                                               tagId = t.Id,
+                                               tagName = t.Name,
+                                               tagCount = t.Stores.Count
                                            }).ToList();
                 var unTagStore = from s in sme.Stores
                                  where s.UserId.Equals(userId) &&
@@ -38,14 +41,15 @@ namespace ShareMaps.Controllers
                                  select s;
                 homeIndexViewModel.tags.Add(new TagCountViewModel
                 {
-                    tag = null,
-                    count = unTagStore.Count()
+                    tagId = -1,
+                    tagName = "未標記",
+                    tagCount = unTagStore.Count()
                 });
                 return View(homeIndexViewModel);
             }
         }
-        
-        // GET: Home/GetTagsLsit
+
+        // GET: Home/GetVisibleMarker
         [HttpGet]
         public ActionResult GetVisibleMarker(int id)
         {
@@ -761,18 +765,34 @@ namespace ShareMaps.Controllers
 
                         jsonHelper.status = true;
                         jsonHelper.message = "";
-                        jsonHelper.data = (from t in sme.Tags
-                                           where t.UserId.Equals(userId)
-                                           orderby t.Id descending
-                                           select new
-                                           {
-                                               id = t.Id,
-                                               name = t.Name,
-                                               sequence = t.Sequence
-                                           }).ToList();
+                        List<TagCountViewModel> ListTagCountViewModels = (from t in sme.Tags
+                                                                          where t.UserId.Equals(userId)
+                                                                          orderby t.Id descending
+                                                                          select new TagCountViewModel
+                                                                          {
+                                                                              tagId = t.Id,
+                                                                              tagName = t.Name,
+                                                                              tagCount = t.Stores.Count
+                                                                          }).ToList();
+
+                        var unTagStore = (from s in sme.Stores
+                                          where s.UserId.Equals(userId) &&
+                                          s.Tags.Count.Equals(0)
+                                          select s).ToList();
+
+                        ListTagCountViewModels.Add(new TagCountViewModel
+                        {
+                            tagId = -1,
+                            tagName = "未標記",
+                            tagCount = unTagStore.Count()
+                        });
+
+                        jsonHelper.data = ListTagCountViewModels;
+
+                        string x = JsonConvert.SerializeObject(jsonHelper);
                         return Json(jsonHelper, JsonRequestBehavior.AllowGet);
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         jsonHelper.status = false;
                         jsonHelper.message = "資料取得錯誤";

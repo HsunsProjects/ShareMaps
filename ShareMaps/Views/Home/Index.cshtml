@@ -3,9 +3,6 @@
     ViewBag.Title = "Home Page";
 }
 
-<!--BootstrapDialog-->
-<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.7/css/bootstrap-dialog.min.css">-->
-<!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.7/js/bootstrap-dialog.min.js"></script>-->
 <!--bootstrap-toggle-->
 <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
 <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
@@ -13,7 +10,6 @@
 <!--jquery confirm-->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
-
 
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
@@ -44,13 +40,7 @@
                     <div class="list-group" id="list-tab" role="tablist">
                         @foreach (var item in Model.tags)
                         {
-                            if (item.tag != null)
-                            {
-                                <button id="@item.tag.Id" type="button" class="list-group-item">@item.tag.Name (@item.count)</button>}
-                            else
-                            {
-                                <button id="-1" type="button" class="list-group-item">未標記 (@item.count)</button>
-                            }
+                            <button id="@item.tagId" type="button" class="list-group-item">@item.tagName (@item.tagCount)</button>
                         }
                     </div>
                 </div>
@@ -74,43 +64,6 @@
             </div>
             <div id="map" style="width:100%;height:100vh;"></div>
         </div>
-        @*<div class="col-md-3">
-
-                        <h4>標籤顯示</h4>
-                            <div class="col-md-12">
-                                <label class="checkbox-inline">
-                                    <input id="filterAll" type="checkbox" data-toggle="toggle" data-on="顯示" data-off="隱藏">
-                                    全部
-                                </label>
-                                <label class="checkbox-inline">
-                                    <input id="filterUser" type="checkbox" checked data-toggle="toggle" data-on="顯示" data-off="隱藏">
-                                    @User.Identity.Name.Substring(0, 1)
-                                </label>
-                            </div>
-                            <hr />
-                            <div id="tagManageArea" style="display:none">
-                                <a class="btn btn-link" data-toggle="modal" data-target="#ModalTagsManage" href='@Url.Action("TagsManagement")'><h4>標籤管理</h4></a>
-                                <div id="FilterTagArea" class="col-md-12 list-group">
-                                    <div class="list-group" id="list-tab" role="tablist">
-                                        @foreach (var item in Model.tags)
-                                        {
-                                            <button id="@item.Id" type="button" class="list-group-item">@item.Name</button>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                </div>
-            <div class="col-md-9">
-                <div class="input-group">
-                    @Html.TextBox("TextAddressSearching", null, new { @class = "form-control", placeholder = "輸入商店資訊", id = "TextAddressSearching" })
-                    <div class="input-group-btn">
-                        <button id="ButtonAddressSearching" class="btn btn-default" type="button">
-                            <i class="glyphicon glyphicon-search"></i>
-                        </button>
-                    </div>
-                </div>
-                <div id="map" style="width:100%;height:100vh;"></div>
-            </div>*@
     }
     else
     {
@@ -142,25 +95,6 @@
     </div>
 </div>
 
-@*BootstrapDialog modal*@
-@*<div class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                    <h4 class="modal-title">Modal title</h4>
-                </div>
-                <div class="modal-body">
-                    <p>One fine body…</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>*@
-
 <script>
     function w3_open() {
         document.getElementById("main").style.marginLeft = "25%";
@@ -183,15 +117,21 @@
 
     $("#ModalTagsManage").on('hidden.bs.modal', function () {
         //結束標籤管理頁面重新載入標籤清單
-        SetFilterTagArea();
+        var $activedTag = $('#list-tab').find('.active');
+        SetFilterTagArea($activedTag.prop('id'));
+        showCurrentTagMarker();
         $(this).data('bs.modal', null);
     });
 
     $("#ModalStoreManage").on('hidden.bs.modal', function () {
+        //結束標籤管理頁面重新載入標籤清單
+        var $activedTag = $('#list-tab').find('.active');
+        SetFilterTagArea($activedTag.prop('id'));
+        showCurrentTagMarker();
         $(this).data('bs.modal', null);
     });
 
-    function SetFilterTagArea() {
+    function SetFilterTagArea(activeId) {
         $.ajax({
             url: '@Url.Action("GetTagsLsit")',
             type: "GET",
@@ -200,7 +140,12 @@
                     if (result.status) {
                         $("#list-tab").empty();
                         $.each(result.data, function (i, item) {
-                            $('<button/>', { 'id': item.id, 'type': 'button', 'text': item.name }).addClass('list-group-item').appendTo("#list-tab");
+                            if (activeId == item.tagId) {
+                                $('<button/>', { 'id': item.tagId, 'type': 'button', 'text': item.tagName + ' (' + item.tagCount + ')' }).addClass('list-group-item active').appendTo("#list-tab");
+                            }
+                            else {
+                                $('<button/>', { 'id': item.tagId, 'type': 'button', 'text': item.tagName + ' (' + item.tagCount + ')' }).addClass('list-group-item').appendTo("#list-tab");
+                            }
                         });
                     }
                     else {
@@ -496,6 +441,7 @@
             markerVisible(dbMarkerArrAll, $(this).prop('checked'));
         })
     })
+
     $(function () {
         $('#filterUser').change(function () {
             markerVisible(dbMarkerArrUser, $(this).prop('checked'));
@@ -521,7 +467,7 @@
     }
 
     function countMarker() {
-        $('#markerAll').text('地圖全部(' + (dbMarkerArrAll.length + dbMarkerArrUser.length) + ')');
+        $('#markerAll').text('他人地圖(' + dbMarkerArrAll.length + ')');
         $('#markerUser').text('我的全部(' + dbMarkerArrUser.length + ')');
     }
 
@@ -532,6 +478,7 @@
         $this.toggleClass('active');
         loadTagMarker($this.prop('id'));
     });
+
 
     //新增或修改後重新載入目前選擇的Tag以及要顯示的清單
     function showCurrentTagMarker() {
@@ -554,7 +501,6 @@
             processData: false,
             cache: false,
             success: function (result) {
-                console.log(result.message);
                 if (result) {
                     if (result.status) {
                         tagMarkerVisible(result.data);
@@ -601,6 +547,7 @@
         var storeName = $(this).parent().parent().find('.name').text();
         var lat = $(this).data("marker-lat");
         var lng = $(this).data("marker-lng");
+        var $activedTag = $('#list-tab').find('.active');
         $.confirm({
             title: '提示',
             content: '<p>是否刪除地點《' + storeName + '》?</p>',
@@ -632,6 +579,7 @@
                                         }
                                         alert(result.message);
                                         countMarker();
+                                        SetFilterTagArea($activedTag.prop('id'));
                                     }
                                     else {
                                         alert(result.message);

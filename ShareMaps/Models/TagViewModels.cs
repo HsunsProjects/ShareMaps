@@ -14,8 +14,10 @@ namespace ShareMaps.Models
 
     public class TagCountViewModel
     {
-        public Tags tag { get; set; }
+        public int tagId { get; set; }
 
-        public int count { get; set; }
+        public string tagName { get; set; }
+
+        public int tagCount { get; set; }
     }
 }
