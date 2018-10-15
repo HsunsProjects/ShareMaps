@@ -9,17 +9,19 @@
         <EntityTypeShape EntityType="ShareMapsModel.AspNetRoles" Width="1.5" PointX="0.75" PointY="5.5" />
         <EntityTypeShape EntityType="ShareMapsModel.AspNetUserClaims" Width="1.5" PointX="5.25" PointY="8.75" />
         <EntityTypeShape EntityType="ShareMapsModel.AspNetUserLogins" Width="1.5" PointX="5.25" PointY="1.875" />
-        <EntityTypeShape EntityType="ShareMapsModel.Tags" Width="1.5" PointX="7.5" PointY="5.25" />
         <EntityTypeShape EntityType="ShareMapsModel.AspNetUsers" Width="1.5" PointX="3" PointY="4.125" />
         <AssociationConnector Association="ShareMapsModel.FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId" />
         <AssociationConnector Association="ShareMapsModel.FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId" />
-        <AssociationConnector Association="ShareMapsModel.FK_Tags_AspNetUsers" />
         <AssociationConnector Association="ShareMapsModel.AspNetUserRoles" />
         <EntityTypeShape EntityType="ShareMapsModel.Photos" Width="1.5" PointX="7.5" PointY="12.25" />
         <EntityTypeShape EntityType="ShareMapsModel.Stores" Width="1.5" PointX="5.25" PointY="11.5" />
         <AssociationConnector Association="ShareMapsModel.FK_Stores_AspNetUsers" />
         <AssociationConnector Association="ShareMapsModel.FK_Photos_Stores" />
+        <EntityTypeShape EntityType="ShareMapsModel.Tags" Width="1.5" PointX="7.5" PointY="8.375" />
+        <AssociationConnector Association="ShareMapsModel.FK_Tags_AspNetUsers" />
         <AssociationConnector Association="ShareMapsModel.StoresTags" />
+        <EntityTypeShape EntityType="ShareMapsModel.Icons" Width="1.5" PointX="5.375" PointY="4.875" />
+        <AssociationConnector Association="ShareMapsModel.FK_Tags_Icons" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

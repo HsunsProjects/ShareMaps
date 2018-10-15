@@ -29,9 +29,10 @@ namespace ShareMaps.Models
         public virtual DbSet<AspNetRoles> AspNetRoles { get; set; }
         public virtual DbSet<AspNetUserClaims> AspNetUserClaims { get; set; }
         public virtual DbSet<AspNetUserLogins> AspNetUserLogins { get; set; }
-        public virtual DbSet<Tags> Tags { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
         public virtual DbSet<Photos> Photos { get; set; }
         public virtual DbSet<Stores> Stores { get; set; }
+        public virtual DbSet<Tags> Tags { get; set; }
+        public virtual DbSet<Icons> Icons { get; set; }
     }
 }

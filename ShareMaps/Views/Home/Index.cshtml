@@ -40,7 +40,7 @@
                     <div class="list-group" id="list-tab" role="tablist">
                         @foreach (var item in Model.tags)
                         {
-                            <button id="@item.tagId" type="button" class="list-group-item">@item.tagName (@item.tagCount)</button>
+                            <button id="@item.tagId" type="button" class="list-group-item"><i id="icon" class="@item.iconValue"></i>@item.tagName (@item.tagCount)</button>
                         }
                     </div>
                 </div>
@@ -141,10 +141,12 @@
                         $("#list-tab").empty();
                         $.each(result.data, function (i, item) {
                             if (activeId == item.tagId) {
-                                $('<button/>', { 'id': item.tagId, 'type': 'button', 'text': item.tagName + ' (' + item.tagCount + ')' }).addClass('list-group-item active').appendTo("#list-tab");
+                                $('<button/>', { 'id': item.tagId, 'type': 'button', 'text': item.tagName + ' (' + item.tagCount + ')' }).prepend(
+                                    $('<i/>', { 'class': item.iconValue })).addClass('list-group-item active').appendTo("#list-tab");
                             }
                             else {
-                                $('<button/>', { 'id': item.tagId, 'type': 'button', 'text': item.tagName + ' (' + item.tagCount + ')' }).addClass('list-group-item').appendTo("#list-tab");
+                                $('<button/>', { 'id': item.tagId, 'type': 'button', 'text': item.tagName + ' (' + item.tagCount + ')' }).prepend(
+                                    $('<i/>', { 'class': item.iconValue })).addClass('list-group-item').appendTo("#list-tab");
                             }
                         });
                     }
@@ -484,7 +486,7 @@
     function showCurrentTagMarker() {
         if ($('#filterUser').prop('checked') == false) {
             var $activedTag = $('#list-tab').find('.active');
-            if ($activedTag) {
+            if ($activedTag.length > 0) {
                 loadTagMarker($activedTag.prop('id'));
             }
         }

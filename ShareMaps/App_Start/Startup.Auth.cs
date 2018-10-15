@@ -54,9 +54,23 @@ namespace ShareMaps
             //   consumerKey: "",
             //   consumerSecret: "");
 
-            app.UseFacebookAuthentication(
-               appId: "244032049606628",
-               appSecret: "4583eb963fa5d824cd970546d59d9ff8");
+            //app.UseFacebookAuthentication(
+            //   appId: "244032049606628",
+            //   appSecret: "4583eb963fa5d824cd970546d59d9ff8");
+
+            app.UseFacebookAuthentication(new Microsoft.Owin.Security.Facebook.FacebookAuthenticationOptions()
+            {
+                AppId = "244032049606628",
+                AppSecret = "4583eb963fa5d824cd970546d59d9ff8",
+                Scope =
+                {
+                    "public_profile"
+                },
+                Fields =
+                {
+                    "picture"
+                }
+            });
 
             app.UseGoogleAuthentication(new GoogleOAuth2AuthenticationOptions()
             {

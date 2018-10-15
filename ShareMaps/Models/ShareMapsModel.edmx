@@ -67,6 +67,14 @@
           <Property Name="UserName" Type="nvarchar" MaxLength="256" Nullable="false" />
           <Property Name="Nickname" Type="nvarchar" MaxLength="256" Nullable="false" />
         </EntityType>
+        <EntityType Name="Icons">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Value" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Unicode" Type="nvarchar" MaxLength="10" Nullable="false" />
+        </EntityType>
         <EntityType Name="Photos">
           <Key>
             <PropertyRef Name="Id" />
@@ -109,6 +117,7 @@
           <Property Name="Name" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="Sequence" Type="int" />
           <Property Name="UserId" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="IconId" Type="int" Nullable="false" />
         </EntityType>
         <Association Name="FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId">
           <End Role="AspNetUsers" Type="Self.AspNetUsers" Multiplicity="1">
@@ -226,6 +235,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Tags_Icons">
+          <End Role="Icons" Type="Self.Icons" Multiplicity="1" />
+          <End Role="Tags" Type="Self.Tags" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Icons">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Tags">
+              <PropertyRef Name="IconId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="ShareMapsModelStoreContainer">
           <EntitySet Name="__MigrationHistory" EntityType="Self.__MigrationHistory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="AspNetRoles" EntityType="Self.AspNetRoles" Schema="dbo" store:Type="Tables" />
@@ -233,6 +254,7 @@
           <EntitySet Name="AspNetUserLogins" EntityType="Self.AspNetUserLogins" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="AspNetUserRoles" EntityType="Self.AspNetUserRoles" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="AspNetUsers" EntityType="Self.AspNetUsers" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Icons" EntityType="Self.Icons" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Photos" EntityType="Self.Photos" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Stores" EntityType="Self.Stores" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="StoresTags" EntityType="Self.StoresTags" Schema="dbo" store:Type="Tables" />
@@ -273,6 +295,10 @@
             <End Role="AspNetUsers" EntitySet="AspNetUsers" />
             <End Role="Tags" EntitySet="Tags" />
           </AssociationSet>
+          <AssociationSet Name="FK_Tags_Icons" Association="Self.FK_Tags_Icons">
+            <End Role="Icons" EntitySet="Icons" />
+            <End Role="Tags" EntitySet="Tags" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -283,7 +309,6 @@
           <EntitySet Name="AspNetRoles" EntityType="ShareMapsModel.AspNetRoles" />
           <EntitySet Name="AspNetUserClaims" EntityType="ShareMapsModel.AspNetUserClaims" />
           <EntitySet Name="AspNetUserLogins" EntityType="ShareMapsModel.AspNetUserLogins" />
-          <EntitySet Name="Tags" EntityType="ShareMapsModel.Tags" />
           <EntitySet Name="AspNetUsers" EntityType="ShareMapsModel.AspNetUsers" />
           <AssociationSet Name="FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId" Association="ShareMapsModel.FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId">
             <End Role="AspNetUsers" EntitySet="AspNetUsers" />
@@ -292,10 +317,6 @@
           <AssociationSet Name="FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId" Association="ShareMapsModel.FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId">
             <End Role="AspNetUsers" EntitySet="AspNetUsers" />
             <End Role="AspNetUserLogins" EntitySet="AspNetUserLogins" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Tags_AspNetUsers" Association="ShareMapsModel.FK_Tags_AspNetUsers">
-            <End Role="AspNetUsers" EntitySet="AspNetUsers" />
-            <End Role="Tags" EntitySet="Tags" />
           </AssociationSet>
           <AssociationSet Name="AspNetUserRoles" Association="ShareMapsModel.AspNetUserRoles">
             <End Role="AspNetRoles" EntitySet="AspNetRoles" />
@@ -311,8 +332,18 @@
             <End Role="Stores" EntitySet="Stores" />
             <End Role="Photos" EntitySet="Photos" />
           </AssociationSet>
+          <EntitySet Name="Tags" EntityType="ShareMapsModel.Tags" />
+          <AssociationSet Name="FK_Tags_AspNetUsers" Association="ShareMapsModel.FK_Tags_AspNetUsers">
+            <End Role="AspNetUsers" EntitySet="AspNetUsers" />
+            <End Role="Tags" EntitySet="Tags" />
+          </AssociationSet>
           <AssociationSet Name="StoresTags" Association="ShareMapsModel.StoresTags">
             <End Role="Stores" EntitySet="Stores" />
+            <End Role="Tags" EntitySet="Tags" />
+          </AssociationSet>
+          <EntitySet Name="Icons" EntityType="ShareMapsModel.Icons" />
+          <AssociationSet Name="FK_Tags_Icons" Association="ShareMapsModel.FK_Tags_Icons">
+            <End Role="Icons" EntitySet="Icons" />
             <End Role="Tags" EntitySet="Tags" />
           </AssociationSet>
           </EntityContainer>
@@ -355,17 +386,6 @@
           <Property Name="UserId" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="AspNetUsers" Relationship="ShareMapsModel.FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId" FromRole="AspNetUserLogins" ToRole="AspNetUsers" />
         </EntityType>
-        <EntityType Name="Tags">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="Sequence" Type="Int32" />
-          <Property Name="UserId" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="AspNetUsers" Relationship="ShareMapsModel.FK_Tags_AspNetUsers" FromRole="Tags" ToRole="AspNetUsers" />
-          <NavigationProperty Name="Stores" Relationship="ShareMapsModel.StoresTags" FromRole="Tags" ToRole="Stores" />
-        </EntityType>
         <EntityType Name="AspNetUsers">
           <Key>
             <PropertyRef Name="Id" />
@@ -385,9 +405,9 @@
           <Property Name="Nickname" Type="String" Nullable="false" MaxLength="256" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="AspNetUserClaims" Relationship="ShareMapsModel.FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId" FromRole="AspNetUsers" ToRole="AspNetUserClaims" />
           <NavigationProperty Name="AspNetUserLogins" Relationship="ShareMapsModel.FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId" FromRole="AspNetUsers" ToRole="AspNetUserLogins" />
-          <NavigationProperty Name="Tags" Relationship="ShareMapsModel.FK_Tags_AspNetUsers" FromRole="AspNetUsers" ToRole="Tags" />
           <NavigationProperty Name="AspNetRoles" Relationship="ShareMapsModel.AspNetUserRoles" FromRole="AspNetUsers" ToRole="AspNetRoles" />
           <NavigationProperty Name="Stores" Relationship="ShareMapsModel.FK_Stores_AspNetUsers" FromRole="AspNetUsers" ToRole="Stores" />
+          <NavigationProperty Name="Tags" Relationship="ShareMapsModel.FK_Tags_AspNetUsers" FromRole="AspNetUsers" ToRole="Tags" />
         </EntityType>
         <Association Name="FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId">
           <End Type="ShareMapsModel.AspNetUsers" Role="AspNetUsers" Multiplicity="1">
@@ -413,18 +433,6 @@
               <PropertyRef Name="Id" />
             </Principal>
             <Dependent Role="AspNetUserLogins">
-              <PropertyRef Name="UserId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Tags_AspNetUsers">
-          <End Type="ShareMapsModel.AspNetUsers" Role="AspNetUsers" Multiplicity="1" />
-          <End Type="ShareMapsModel.Tags" Role="Tags" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="AspNetUsers">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Tags">
               <PropertyRef Name="UserId" />
             </Dependent>
           </ReferentialConstraint>
@@ -487,9 +495,55 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="Tags">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Sequence" Type="Int32" />
+          <Property Name="UserId" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="IconId" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="AspNetUsers" Relationship="ShareMapsModel.FK_Tags_AspNetUsers" FromRole="Tags" ToRole="AspNetUsers" />
+          <NavigationProperty Name="Stores" Relationship="ShareMapsModel.StoresTags" FromRole="Tags" ToRole="Stores" />
+          <NavigationProperty Name="Icons" Relationship="ShareMapsModel.FK_Tags_Icons" FromRole="Tags" ToRole="Icons" />
+        </EntityType>
+        <Association Name="FK_Tags_AspNetUsers">
+          <End Type="ShareMapsModel.AspNetUsers" Role="AspNetUsers" Multiplicity="1" />
+          <End Type="ShareMapsModel.Tags" Role="Tags" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="AspNetUsers">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Tags">
+              <PropertyRef Name="UserId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="StoresTags">
           <End Type="ShareMapsModel.Stores" Role="Stores" Multiplicity="*" />
           <End Type="ShareMapsModel.Tags" Role="Tags" Multiplicity="*" />
+        </Association>
+        <EntityType Name="Icons">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Value" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Unicode" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Tags" Relationship="ShareMapsModel.FK_Tags_Icons" FromRole="Icons" ToRole="Tags" />
+        </EntityType>
+        <Association Name="FK_Tags_Icons">
+          <End Type="ShareMapsModel.Icons" Role="Icons" Multiplicity="1" />
+          <End Type="ShareMapsModel.Tags" Role="Tags" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Icons">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Tags">
+              <PropertyRef Name="IconId" />
+            </Dependent>
+          </ReferentialConstraint>
         </Association>
         </Schema>
     </edmx:ConceptualModels>
@@ -531,16 +585,6 @@
                 <ScalarProperty Name="UserId" ColumnName="UserId" />
                 <ScalarProperty Name="ProviderKey" ColumnName="ProviderKey" />
                 <ScalarProperty Name="LoginProvider" ColumnName="LoginProvider" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Tags">
-            <EntityTypeMapping TypeName="ShareMapsModel.Tags">
-              <MappingFragment StoreEntitySet="Tags">
-                <ScalarProperty Name="UserId" ColumnName="UserId" />
-                <ScalarProperty Name="Sequence" ColumnName="Sequence" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -599,6 +643,17 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="Tags">
+            <EntityTypeMapping TypeName="ShareMapsModel.Tags">
+              <MappingFragment StoreEntitySet="Tags">
+                <ScalarProperty Name="IconId" ColumnName="IconId" />
+                <ScalarProperty Name="UserId" ColumnName="UserId" />
+                <ScalarProperty Name="Sequence" ColumnName="Sequence" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <AssociationSetMapping Name="StoresTags" TypeName="ShareMapsModel.StoresTags" StoreEntitySet="StoresTags">
             <EndProperty Name="Tags">
               <ScalarProperty Name="Id" ColumnName="TagId" />
@@ -607,6 +662,15 @@
               <ScalarProperty Name="Id" ColumnName="StoreId" />
             </EndProperty>
           </AssociationSetMapping>
+          <EntitySetMapping Name="Icons">
+            <EntityTypeMapping TypeName="ShareMapsModel.Icons">
+              <MappingFragment StoreEntitySet="Icons">
+                <ScalarProperty Name="Unicode" ColumnName="Unicode" />
+                <ScalarProperty Name="Value" ColumnName="Value" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

@@ -24,13 +24,13 @@ namespace ShareMaps.Models
     
         public string Id { get; set; }
         [Required]
-        [Display(Name = "名稱")]
+        [Display(Name ="名稱")]
         public string Name { get; set; }
         [Display(Name = "地址")]
         public string Address { get; set; }
         [Display(Name = "電話")]
         public string PhoneNumber { get; set; }
-        [Display(Name = "備註")]
+        [Display(Name = "描述")]
         public string Description { get; set; }
         public decimal Lat { get; set; }
         public decimal Lng { get; set; }

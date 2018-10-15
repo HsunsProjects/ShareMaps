@@ -11,27 +11,20 @@ namespace ShareMaps.Models
 {
     using System;
     using System.Collections.Generic;
-    using System.ComponentModel.DataAnnotations;
-
-    public partial class Tags
+    
+    public partial class Icons
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public Tags()
+        public Icons()
         {
-            this.Stores = new HashSet<Stores>();
+            this.Tags = new HashSet<Tags>();
         }
     
         public int Id { get; set; }
-        [Required]
-        [Display(Name = "名稱")]
-        public string Name { get; set; }
-        public Nullable<int> Sequence { get; set; }
-        public string UserId { get; set; }
-        public int IconId { get; set; }
+        public string Value { get; set; }
+        public string Unicode { get; set; }
     
-        public virtual AspNetUsers AspNetUsers { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Stores> Stores { get; set; }
-        public virtual Icons Icons { get; set; }
+        public virtual ICollection<Tags> Tags { get; set; }
     }
 }

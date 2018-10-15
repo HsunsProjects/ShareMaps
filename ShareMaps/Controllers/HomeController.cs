@@ -33,7 +33,8 @@ namespace ShareMaps.Controllers
                                            {
                                                tagId = t.Id,
                                                tagName = t.Name,
-                                               tagCount = t.Stores.Count
+                                               tagCount = t.Stores.Count,
+                                               iconValue = t.Icons.Value
                                            }).ToList();
                 var unTagStore = from s in sme.Stores
                                  where s.UserId.Equals(userId) &&
@@ -43,7 +44,8 @@ namespace ShareMaps.Controllers
                 {
                     tagId = -1,
                     tagName = "未標記",
-                    tagCount = unTagStore.Count()
+                    tagCount = unTagStore.Count(),
+                    iconValue = sme.Icons.Find(1).Value
                 });
                 return View(homeIndexViewModel);
             }
@@ -91,7 +93,7 @@ namespace ShareMaps.Controllers
                         jsonHelper.message = "資料取得成功";
                         return Json(jsonHelper, JsonRequestBehavior.AllowGet);
                     }
-                    catch(Exception ex)
+                    catch
                     {
                         jsonHelper.status = false;
                         jsonHelper.message = "資料取得錯誤";
@@ -403,7 +405,7 @@ namespace ShareMaps.Controllers
                             };
                             return Json(jsonHelper);
                         }
-                        catch (Exception ex)
+                        catch
                         {
                             jsonHelper.status = false;
                             jsonHelper.message = "新增過程出現問題";
@@ -513,7 +515,7 @@ namespace ShareMaps.Controllers
                                 return RedirectToAction("Index");
                             }
                         }
-                        catch (Exception ex)
+                        catch
                         {
                             jsonHelper.status = false;
                             jsonHelper.message = "修改過程出現問題";
@@ -592,10 +594,18 @@ namespace ShareMaps.Controllers
                     {
                         string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
                         TagsManagementViewModel tagsManagementViewModel = new TagsManagementViewModel();
-                        tagsManagementViewModel.tagList = (from t in sme.Tags
-                                                           where t.UserId.Equals(userId)
-                                                           orderby t.Id descending
-                                                           select t).ToList();
+                        SelectList selectLists = new SelectList(sme.Icons, "Id", "Unicode");
+                        tagsManagementViewModel.iconList = sme.Icons.ToList();
+                        tagsManagementViewModel.iconTagList = (from t in sme.Tags
+                                                               where t.UserId.Equals(userId)
+                                                               orderby t.Id descending
+                                                               select new IconTagViewModel
+                                                               {
+                                                                   tag = t,
+                                                                   icon = (from i in sme.Icons
+                                                                           where i.Id.Equals(t.IconId)
+                                                                           select i).FirstOrDefault()
+                                                               }).ToList();
                         return PartialView("_TagsManagementPartial", tagsManagementViewModel);
                     }
                     catch
@@ -610,26 +620,36 @@ namespace ShareMaps.Controllers
         // POST: Home/TagCreate
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult TagCreate([Bind(Prefix = "tags")]Tags tags)
+        public ActionResult TagCreate([Bind(Prefix = "addIconTag")]IconTagViewModel iconTagViewModel)
         {
             if (Request.IsAuthenticated)
             {
                 JsonHelper jsonHelper = new JsonHelper();
                 if (ModelState.IsValid)
                 {
-                    tags.UserId = User.Identity.GetUserId();
                     using (var sme = new ShareMapsEntities())
                     {
                         try
                         {
-                            sme.Tags.Add(tags);
+                            string userId = User.Identity.GetUserId();
+
+                            var tagSequence = from t in sme.Tags
+                                              where t.UserId.Equals(userId)
+                                              select t;
+                            iconTagViewModel.tag.Sequence = tagSequence.Count();
+                            iconTagViewModel.tag.UserId = userId;
+                            sme.Tags.Add(iconTagViewModel.tag);
                             sme.SaveChanges();
+
+                            Icons addIcon = sme.Icons.Find(iconTagViewModel.tag.IconId);
 
                             var data = new
                             {
-                                id = tags.Id,
-                                name = tags.Name,
-                                sequence = tags.Sequence
+                                id = iconTagViewModel.tag.Id,
+                                name = iconTagViewModel.tag.Name,
+                                sequence = iconTagViewModel.tag.Sequence,
+                                iconId = addIcon.Id,
+                                iconValue = addIcon.Value
                             };
 
                             jsonHelper.status = true;
@@ -655,7 +675,7 @@ namespace ShareMaps.Controllers
         // POST: Home/TagEdit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult TagEdit(int id, string name, int? sequence)
+        public ActionResult TagEdit(int id, string name, int? sequence, int iconId)
         {
             if (Request.IsAuthenticated)
             {
@@ -671,13 +691,17 @@ namespace ShareMaps.Controllers
                             {
                                 tags.Name = name;
                                 tags.Sequence = sequence;
+                                tags.IconId = iconId;
                                 sme.SaveChanges();
 
+                                Icons addIcon = sme.Icons.Find(tags.IconId);
                                 var data = new
                                 {
                                     id = tags.Id,
                                     name = tags.Name,
-                                    sequence = tags.Sequence
+                                    sequence = tags.Sequence,
+                                    iconId = addIcon.Id,
+                                    iconValue = addIcon.Value
                                 };
 
                                 jsonHelper.status = true;
@@ -772,7 +796,8 @@ namespace ShareMaps.Controllers
                                                                           {
                                                                               tagId = t.Id,
                                                                               tagName = t.Name,
-                                                                              tagCount = t.Stores.Count
+                                                                              tagCount = t.Stores.Count,
+                                                                              iconValue = t.Icons.Value
                                                                           }).ToList();
 
                         var unTagStore = (from s in sme.Stores
@@ -784,15 +809,15 @@ namespace ShareMaps.Controllers
                         {
                             tagId = -1,
                             tagName = "未標記",
-                            tagCount = unTagStore.Count()
+                            tagCount = unTagStore.Count(),
+                            iconValue = sme.Icons.Find(1).Value
                         });
 
                         jsonHelper.data = ListTagCountViewModels;
 
-                        string x = JsonConvert.SerializeObject(jsonHelper);
                         return Json(jsonHelper, JsonRequestBehavior.AllowGet);
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         jsonHelper.status = false;
                         jsonHelper.message = "資料取得錯誤";

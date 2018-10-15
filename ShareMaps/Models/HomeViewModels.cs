@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
+using System.Web.Mvc;
 
 namespace ShareMaps.Models
 {
@@ -32,7 +33,8 @@ namespace ShareMaps.Models
 
     public class TagsManagementViewModel
     {
-        public Tags tags { get; set; }
-        public List<Tags> tagList { get; set; }
+        public IconTagViewModel addIconTag { get; set; }
+        public List<Icons> iconList { get; set; }
+        public List<IconTagViewModel> iconTagList { get; set; }
     }
 }

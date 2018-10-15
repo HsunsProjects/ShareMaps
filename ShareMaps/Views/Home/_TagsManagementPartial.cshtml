@@ -1,5 +1,10 @@
 ﻿@model ShareMaps.Models.TagsManagementViewModel
 
+<style>
+    select {
+        font-family: fontAwesome
+    }
+</style>
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
     <h4 class="modal-title">標籤管理</h4>
@@ -8,25 +13,46 @@
     @using (Html.BeginForm("TagCreate", "Home", FormMethod.Post, new { @class = "form-horizontal", role = "form", id = "FormTagsManagement" }))
     {
         @Html.AntiForgeryToken()
-        <div class="form-group row">
-            @Html.LabelFor(m => m.tags.Name, new { @class = "col-md-2 col-md-offset-1 control-label" })
-            <div class="col-md-6">
-                @Html.TextBoxFor(m => m.tags.Name, new { @class = "form-control", id = "TextTagCreate" })
-                @Html.ValidationMessageFor(m => m.tags.Name, "", new { @class = "text-danger" })
-            </div>
-            @*<button id="ButtonCreateTag" type="button" class="col-md-1 btn btn-info">加入</button>*@
-            <input type="submit" class="col-md-1 btn btn-info" value="加入" />
+    <div class="form-group row">
+        @Html.LabelFor(m => m.addIconTag.tag.Name, new { @class = "col-md-2 control-label" })
+        <div class="col-md-6">
+            @Html.TextBoxFor(m => m.addIconTag.tag.Name, new { @class = "form-control", id = "TextTagCreate" })
+            @Html.ValidationMessageFor(m => m.addIconTag.tag.Name, "", new { @class = "text-danger" })
         </div>
+        <div class="col-md-2">
+            <select class="form-control" id="addIconTag.tag.IconId" name="addIconTag.tag.IconId">
+                @foreach (var item in Model.iconList)
+                {
+                    <option value="@item.Id">@Html.Raw("&#x" + item.Unicode + ";")</option>
+                }
+            </select>
+        </div>
+        @*<button id="ButtonCreateTag" type="button" class="col-md-1 btn btn-info">加入</button>*@
+        <input type="submit" class="col-md-1 btn btn-info" value="加入" />
+    </div>
     }
     <hr />
     @*編輯區*@
     <div id="EditTagArea" class="form-horizontal">
-        @for (int i = 0; i < Model.tagList.Count; i++)
+        @for (int i = 0; i < Model.iconTagList.Count; i++)
         {
-            <div id="@Model.tagList[i].Id" class="form-group">
-                <div class="col-md-8 col-md-offset-1">
-                    <label id="tagName" class="control-label title">@Model.tagList[i].Name</label>
-                    <input id="editName" type="text" class="form-control values" style="display:none" />
+            <div id="@Model.iconTagList[i].tag.Id" class="form-group row">
+                <div id="tagInfo" class="col-md-8 col-md-offset-1">
+                    <label id="tagName" class="control-label title"><i id="icon" class="@Model.iconTagList[i].icon.Value"></i>@Model.iconTagList[i].tag.Name</label>
+                    <div class="form-group row values" style="display:none">
+                        <div class="col-md-9">
+                            <input id="editName" type="text" class="form-control" />
+                            <input id="editSequence" name="editSequence" type="hidden"  value="@Model.iconTagList[i].tag.Sequence" />
+                        </div>
+                        <div class="col-md-3">
+                            <select id="editIcon" class="form-control">
+                                @foreach (var item in Model.iconList)
+                                {
+                                    <option value="@item.Id" selected=@(item.Id.Equals(Model.iconTagList[i].tag.IconId) ? true :false )>@Html.Raw("&#x" + item.Unicode + ";")</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <button type="button" class="col-md-1 btn btn-info edit">編輯</button>
                 <button type="button" class="col-md-1 btn btn-danger delete">刪除</button>
@@ -34,7 +60,6 @@
                 <button type="button" class="col-md-1 btn btn-primary save" style="display:none">完成</button>
             </div>
         }
-
     </div>
 </div>
 <div class="modal-footer">
@@ -49,7 +74,7 @@
     //要加入前端驗證
     $("#FormTagsManagement").submit(function (e) {
         e.preventDefault();
-        var formData = new FormData(this);        
+        var formData = new FormData(this);
         $.ajax({
             type: 'POST',
             url: '/Home/TagCreate',
@@ -60,12 +85,30 @@
             success: function (result) {
                 if (result) {
                     if (result.status) {
+                        var iconId = result.data.iconId;
+                        var selectList = $('<select/>', { 'id': 'editIcon', 'class': 'form-control' });
+                        @foreach(var item in Model.iconList)
+                        {
+                            <Text>
+                                selectList.append(
+                                    $('<option/>', { 'value': @item.Id, 'selected': (iconId == @item.Id? true : false) }).html('&#x' + '@item.Unicode' + ';')
+                                    );
+                        </Text>
+                        }
+                        //<input id="editSequence" name="editSequence" type="hidden" value="Model.iconTagList[i].tag.Sequence" />
                         $('#FormTagsManagement')[0].reset();
                         $("#EditTagArea").prepend(
-                            $('<div/>', { 'id': result.data.id, 'class': 'form-group' }).append(
-                                $('<div/>', { 'class': 'col-md-8 col-md-offset-1' }).append(
-                                    $('<label/>', { 'id': 'tagName', 'class': 'control-label title', 'text': result.data.name }),
-                                    $('<input/>', { 'id': 'editName', 'type': 'text', 'class': 'form-control values' }).hide()),
+                            $('<div/>', { 'id': result.data.id, 'class': 'form-group row' }).append(
+                                $('<div/>', { 'id': 'tagInfo', 'class': 'col-md-8 col-md-offset-1' }).append(
+                                    $('<label/>', { 'id': 'tagName', 'class': 'control-label title', 'text': result.data.name }).prepend(
+                                        $('<i/>', { 'id': 'icon', 'class': result.data.iconValue })),
+                                    $('<div/>', { 'class': 'form-group row values' }).append(
+                                        $('<div/>', { 'class': 'col-md-9' }).append(
+                                            $('<input/>', { 'id': 'editName', 'type': 'text', 'class': 'form-control' }),
+                                            $('<input/>', { 'id': 'editSequence', 'name': 'editSequence', 'type': 'hidden', 'value': result.data.sequence })),
+                                        $('<div/>', { 'class': 'col-md-3' }).append(
+                                            selectList
+                                        )).hide()),
                                 $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-info edit', 'text': '編輯' }),
                                 $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-danger delete', 'text': '刪除' }),
                                 $('<button/>', { 'type': 'button', 'class': 'col-md-1 btn btn-default cancel', 'text': '取消' }).hide(),
@@ -123,10 +166,12 @@
 
     $('#EditTagArea').on('click', '.edit', function () {
         $(this).hide();
-        var titleText = $(this).prev().find('.title').text();
-        $(this).prev().find('.title').hide();
-        $(this).prev().find('.values').val('').show();
-        $(this).prev().find('.values').attr('placeholder', titleText).show();
+        var tagInfo = $(this).prev();
+        var titleText = tagInfo.find('.title').text();
+        tagInfo.find('.title').hide();
+        var tagValue = tagInfo.find('.values');
+        tagValue.show();
+        tagValue.find('#editName').val('').attr('placeholder', titleText);
         $(this).next('.delete').hide();
         $(this).next().next('.cancel').show();
         $(this).next().next().next('.save').show();
@@ -134,10 +179,12 @@
 
     $('#EditTagArea').on('click', '.delete', function () {
         var btnDelete = $(this);
-        var titleText = btnDelete.prevAll().find('.title').text();
+        var tagInfo = btnDelete.prevAll();
+        var titleText = tagInfo.find('#tagName').text();
+        var icon = tagInfo.find('#icon');
         $.confirm({
             title: '提示',
-            content: '<p>是否刪除標籤《' + titleText + '》?</p><p>(使用此標籤的地點將會移除關聯)</p>',
+            content: '<p>是否刪除標籤《' + icon.prop('outerHTML') + titleText + '》?</p><p>(使用此標籤的地點將會移除關聯)</p>',
             buttons: {
                 cancel: {
                     text: '取消',
@@ -176,8 +223,9 @@
 
     $('#EditTagArea').on('click', '.cancel', function () {
         $(this).hide();
-        $(this).prev().prev().prev().find('.title').show();
-        $(this).prev().prev().prev().find('.values').hide();
+        var tagInfo = $(this).prev().prev().prev();
+        tagInfo.find('.title').show();
+        tagInfo.find('.values').hide();
         $(this).prev().prev('.edit').show();
         $(this).prev('.delete').show();
         $(this).next('.save').hide();
@@ -187,21 +235,23 @@
         var btnSave = $(this);
         var token = $('[name=__RequestVerificationToken]').val();
 
-        var editItem = btnSave.prevAll();
-        var tagId = editItem.parent().attr('id');
-        var tagName = editItem.find('#editName').val();
-        var tagSequence = null;
+        var tagInfo = btnSave.prevAll();
+        var tagId = tagInfo.parent().attr('id');
+        var tagName = tagInfo.find('#editName').val();
+        var tagSequence = tagInfo.find('#editSequence').val();
+        var iconId = tagInfo.find('#editIcon').val();
 
         $.ajax({
             type: 'POST',
             url: '/Home/TagEdit',
-            data: { __RequestVerificationToken: token, id: tagId, name: tagName, sequence: tagSequence },
+            data: { __RequestVerificationToken: token, id: tagId, name: tagName, sequence: tagSequence, iconId: iconId },
             success: function (result) {
                 if (result) {
                     if (result.status) {
+                        var icon = $('<i/>', { 'id': 'icon', 'class': result.data.iconValue })
                         btnSave.hide();
-                        btnSave.prevAll().find('.title').text(result.data.name).show();
-                        btnSave.prevAll().find('.values').hide();
+                        tagInfo.find('.title').html(icon.prop('outerHTML') + result.data.name).show();
+                        tagInfo.find('.values').hide();
                         btnSave.prev().prev().prev('.edit').show();
                         btnSave.prev().prev('.delete').show();
                         btnSave.prev('.cancel').hide();
