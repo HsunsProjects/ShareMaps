@@ -306,23 +306,32 @@ namespace ShareMaps.Controllers
             {
                 using (var sme = new ShareMapsEntities())
                 {
-                    string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
-                    StoreCreateViewModel storeCreateViewModel = new StoreCreateViewModel();
-                    Stores stores = new Stores
+                    try
                     {
-                        Address = address,
-                        Lat = lat,
-                        Lng = lng
-                    };
-                    storeCreateViewModel.store = stores;
-                    storeCreateViewModel.storeTags = (from t in sme.Tags
-                                                      where t.UserId.Equals(userId)
-                                                      select new TagViewModel
-                                                      {
-                                                          tag = t,
-                                                          isChecked = false
-                                                      }).ToList();
-                    return PartialView("_StoreCreatePartial", storeCreateViewModel);
+                        string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
+                        StoreCreateViewModel storeCreateViewModel = new StoreCreateViewModel();
+                        Stores stores = new Stores
+                        {
+                            Address = address,
+                            Lat = lat,
+                            Lng = lng
+                        };
+                        storeCreateViewModel.store = stores;
+                        storeCreateViewModel.storeTags = (from t in sme.Tags
+                                                          where t.UserId.Equals(userId)
+                                                          select new TagViewModel
+                                                          {
+                                                              tag = t,
+                                                              isChecked = false
+                                                          }).ToList();
+                        return PartialView("_StoreCreatePartial", storeCreateViewModel);
+                    }
+                    catch (Exception ex)
+                    {
+                        JsonHelper jsonHelper = new JsonHelper();
+                        jsonHelper.message = ex.ToString();
+                        return Json(jsonHelper);
+                    }
                 }
             }
             return RedirectToAction("Login", "Account");
@@ -383,25 +392,28 @@ namespace ShareMaps.Controllers
 
                             jsonHelper.status = true;
                             jsonHelper.message = "新增成功";
-                            jsonHelper.data = new
+                            jsonHelper.data = new []
                             {
-                                canEditDelete = true,
-                                id = stores.Id,
-                                name = stores.Name,
-                                address = stores.Address,
-                                phoneNumber = stores.PhoneNumber,
-                                description = string.IsNullOrEmpty(stores.Description) ? "" : stores.Description.Replace("\r\n", "<br />"),
-                                shareTime = stores.ShareTime,
-                                lat = stores.Lat,
-                                lng = stores.Lng,
-                                photos = from sp in stores.Photos
-                                         select new
-                                         {
-                                             filename = Path.GetFileName(sp.Path),
-                                             path = Url.Content("~" + sp.Path),
-                                             isMain = sp.IsMain,
-                                             sequence = sp.Sequence
-                                         }
+                                new
+                                {
+                                    canEditDelete = true,
+                                    id = stores.Id,
+                                    name = stores.Name,
+                                    address = stores.Address,
+                                    phoneNumber = stores.PhoneNumber,
+                                    description = string.IsNullOrEmpty(stores.Description) ? "" : stores.Description.Replace("\r\n", "<br />"),
+                                    shareTime = stores.ShareTime,
+                                    lat = stores.Lat,
+                                    lng = stores.Lng,
+                                    photos = from sp in stores.Photos
+                                             select new
+                                             {
+                                                filename = Path.GetFileName(sp.Path),
+                                                path = Url.Content("~" + sp.Path),
+                                                isMain = sp.IsMain,
+                                                sequence = sp.Sequence
+                                             }
+                                }
                             };
                             return Json(jsonHelper);
                         }

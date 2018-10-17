@@ -30,9 +30,9 @@ namespace ShareMaps
                       "~/Content/font-awesome.css"));
 
             bundles.Add(new StyleBundle("~/bundles/bootstrap-fileinput").Include(
-                      "~/Scripts/plugins/piexif.js",
-                      "~/Scripts/plugins/sortable.js",
-                      "~/Scripts/plugins/purify.js",
+                      //"~/Scripts/plugins/piexif.js",
+                      //"~/Scripts/plugins/sortable.js",
+                      //"~/Scripts/plugins/purify.js",
                       "~/Scripts/fileinput.js",
                       "~/Content/bootstrap-fileinput/themes/fa/theme.js",
                       "~/Scripts/locales/zh-TW.js"));
