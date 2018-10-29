@@ -7,6 +7,12 @@ namespace ShareMaps.Models
 {
     public class TagViewModel
     {
+        public int id { get; set; }
+        public string name { get; set; }
+    }
+
+    public class TagCheckedViewModel
+    {
         public Tags tag { get; set; }
         public bool isChecked { get; set; }
     }

@@ -240,6 +240,7 @@
     <Compile Include="Models\Photos.cs">
       <DependentUpon>ShareMapsModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PhotoViewModels.cs" />
     <Compile Include="Models\ShareMapsModel.Context.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -441,6 +442,7 @@
     <Content Include="Views\Home\_StoreCreatePartial.cshtml" />
     <Content Include="Views\Home\_StoreEditPartial.cshtml" />
     <Content Include="Views\Home\_TagsManagementPartial.cshtml" />
+    <Content Include="Views\Home\_StoreInfoPartial.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

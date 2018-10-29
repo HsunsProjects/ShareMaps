@@ -9,7 +9,7 @@ namespace ShareMaps.Models
 {
     public class HomeIndexViewModel
     {
-        public List<StoreViewModel> stores { get; set; }
+        public List<StoreEditDeleteViewModel> stores { get; set; }
         public List<TagCountViewModel> tags { get; set; }
     }
 
@@ -19,7 +19,7 @@ namespace ShareMaps.Models
 
         public List<string> filenames { get; set; }
 
-        public List<TagViewModel> storeTags { get; set; }
+        public List<TagCheckedViewModel> storeTags { get; set; }
     }
 
     public class StoreEditViewModel
@@ -28,7 +28,7 @@ namespace ShareMaps.Models
 
         public List<Photos> storePhotos { get; set; }
 
-        public List<TagViewModel> storeTags { get; set; }
+        public List<TagCheckedViewModel> storeTags { get; set; }
     }
 
     public class TagsManagementViewModel

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace ShareMaps.Controllers
@@ -19,7 +20,7 @@ namespace ShareMaps.Controllers
                 string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
                 HomeIndexViewModel homeIndexViewModel = new HomeIndexViewModel();
                 homeIndexViewModel.stores = (from s in sme.Stores
-                                             select new StoreViewModel()
+                                             select new StoreEditDeleteViewModel()
                                              {
                                                  canEditDelete = s.UserId.Equals(userId) ? true : false,
                                                  store = s,
@@ -68,12 +69,12 @@ namespace ShareMaps.Controllers
 
                             if (tags.Stores.Count > 0)
                             {
-                                var stores = from t in tags.Stores
-                                             select new
-                                             {
-                                                 lat = t.Lat,
-                                                 lng = t.Lng
-                                             };
+                                var stores = (from t in tags.Stores
+                                              select new
+                                              {
+                                                  lat = t.Lat,
+                                                  lng = t.Lng
+                                              }).ToList();
                                 jsonHelper.data = stores;
                             }
                         }
@@ -81,12 +82,12 @@ namespace ShareMaps.Controllers
                         {
                             string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
                             var stores = (from s in sme.Stores
-                                     where s.UserId.Equals(userId) && s.Tags.Count.Equals(0)
-                                     select new
-                                     {
-                                         lat = s.Lat,
-                                         lng = s.Lng
-                                     }).ToList();
+                                          where s.UserId.Equals(userId) && s.Tags.Count.Equals(0)
+                                          select new
+                                          {
+                                              lat = s.Lat,
+                                              lng = s.Lng
+                                          }).ToList();
                             jsonHelper.data = stores;
                         }
                         jsonHelper.status = true;
@@ -102,6 +103,63 @@ namespace ShareMaps.Controllers
                 }
             }
             return RedirectToAction("Login", "Account");
+        }
+
+        // GET: Home/GetStoreInfo
+        [HttpGet]
+        public JsonResult GetStoreInfo(string id)
+        {
+            using (var sme = new ShareMapsEntities())
+            {
+                JsonHelper jsonHelper = new JsonHelper();
+                try
+                {
+                    Stores stores = sme.Stores.Find(id);
+                    var store = new StoreInfoViewModel
+                    {
+                        store = new StoreViewModel
+                        {
+                            id = stores.Id,
+                            name = stores.Name,
+                            address = stores.Address,
+                            phoneNumber = stores.PhoneNumber,
+                            description = stores.Description,
+                            lat = stores.Lat,
+                            lng = stores.Lng,
+                            shareTime = stores.ShareTime
+                        },
+                        storePhotos = (from p in stores.Photos
+                                       select new PhotoViewModel
+                                       {
+                                           id = p.Id,
+                                           path = p.Path,
+                                           isMain = p.IsMain,
+                                           sequence = p.Sequence
+                                       }).ToList(),
+                        storeTags = (from t in stores.Tags
+                                     select new TagViewModel
+                                     {
+                                         id = t.Id,
+                                         name = t.Name
+                                     }).ToList()
+                    };
+                    jsonHelper.data = store;
+                    jsonHelper.status = true;
+                    jsonHelper.message = "資料取得成功";
+                    return Json(jsonHelper, JsonRequestBehavior.AllowGet);
+                }
+                catch
+                {
+                    jsonHelper.status = false;
+                    jsonHelper.message = "資料取得錯誤";
+                    return Json(jsonHelper, JsonRequestBehavior.AllowGet);
+                }
+            }
+        }
+
+        public ActionResult StoreInfo()
+        {
+            return PartialView("_StoreInfoPartial");
         }
 
         public ActionResult About()
@@ -319,7 +377,7 @@ namespace ShareMaps.Controllers
                         storeCreateViewModel.store = stores;
                         storeCreateViewModel.storeTags = (from t in sme.Tags
                                                           where t.UserId.Equals(userId)
-                                                          select new TagViewModel
+                                                          select new TagCheckedViewModel
                                                           {
                                                               tag = t,
                                                               isChecked = false
@@ -448,7 +506,7 @@ namespace ShareMaps.Controllers
                                         select st.Id).ToList();
                     storeEditViewModel.storeTags = (from t in sme.Tags
                                                     where t.UserId.Equals(userId)
-                                                    select new TagViewModel
+                                                    select new TagCheckedViewModel
                                                     {
                                                         tag = t,
                                                         isChecked = storeTagList.Contains(t.Id) ? true : false

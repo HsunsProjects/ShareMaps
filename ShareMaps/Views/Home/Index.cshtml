@@ -13,6 +13,7 @@
 
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
+<script src="https://d.line-scdn.net/r/web/social-plugin/js/thirdparty/loader.min.js" async="async" defer="defer"></script>
 <div class="row">
     @if (Request.IsAuthenticated)
     {
@@ -33,7 +34,7 @@
                     <input id="filterUser" type="checkbox" checked data-toggle="toggle" data-on="顯示" data-off="隱藏">
                 </div>
             </div>
-            <hr class="col-md-12"/>
+            <hr class="col-md-12" />
             <div id="tagManageArea" style="display:none" class="col-md-12">
                 <a class="btn btn-link" data-toggle="modal" data-target="#ModalTagsManage" href='@Url.Action("TagsManagement")'><h4>標籤管理</h4></a>
                 <div id="FilterTagArea" class="col-md-12 list-group">
@@ -51,7 +52,7 @@
                 <div class="btn-group col">
                     <button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">篩選條件</button>
                     @*<button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">&#9776;</button>
-                    <button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">&#9776;</button>*@
+                        <button id="openNav" type="button" class="btn btn-default" onclick="w3_open()">&#9776;</button>*@
                 </div>
                 <div class="input-group col-md-11">
                     @Html.TextBox("TextAddressSearching", null, new { @class = "form-control", placeholder = "輸入地址", id = "TextAddressSearching" })
@@ -93,6 +94,9 @@
         <div class="modal-content">
         </div>
     </div>
+</div>
+
+<div id="dbInfowindow">
 </div>
 
 <script>
@@ -172,7 +176,7 @@
         targetLatLng = { lat: 25.0487345, lng: 121.5142306 };
         map = new google.maps.Map(document.getElementById('map'), {
             center: targetLatLng,
-            zoom: 13,
+            zoom: 16,
             mapTypeControl: false
         });
 
@@ -363,15 +367,16 @@
 
     //全域變數 map 設定
     function mapSetting(resultCenterLatLng) {
-        map.zoom = 13;
+        map.zoom = 16;
         map.setCenter(resultCenterLatLng);
     }
 
     var dbMarkerArrAll = [];
     var dbMarkerArrUser = [];
+    var dbInfowindow;
     function createDbMarker(isAuthenticated, data) {
         if (data.status) {
-            var dbInfowindow = new google.maps.InfoWindow({ content: '' });
+            dbInfowindow = new google.maps.InfoWindow({ content: '' });
             $.each(data.data, function (i, item) {
                 window.setTimeout(function () {
                     var dbMarker = new google.maps.Marker({
@@ -381,69 +386,98 @@
                         icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
                         animation: google.maps.Animation.DROP
                     });
-                    var editDeleteArea = '<div>';
-                    if (isAuthenticated) {
-                        if (item.canEditDelete) {
-                            //有登入又是自己的
-                            dbMarker.setMap(map);
-                            dbMarkerArrUser.push(dbMarker);
-                            editDeleteArea = '<a data-toggle="modal" data-target="#ModalStoreManage" href="/Home/StoreEdit/' + item.id + '">[編輯]</a>'
-                                + '<a class="remove-marker" data-marker-lat="' + item.lat + '" data-marker-lng="' + item.lng + '">[刪除]</a>';
-                        }
-                        else {
-                            //有登入不是自己的
-                            dbMarker.setMap(null);
-                            dbMarkerArrAll.push(dbMarker);
-                        }
-                    }
-                    else {
-                        //沒有登入
-                        dbMarker.setMap(map);
-                        dbMarkerArrAll.push(dbMarker);
-                    }
-                    editDeleteArea += '</div>';
+                    //var editDeleteArea = '<div>';
+                    //if (isAuthenticated) {
+                    //    if (item.canEditDelete) {
+                    //        //有登入又是自己的
+                    //        dbMarker.setMap(map);
+                    //        dbMarkerArrUser.push(dbMarker);
+                    //        editDeleteArea = '<a data-toggle="modal" data-target="#ModalStoreManage" href="/Home/StoreEdit/' + item.id + '">[編輯]</a>'
+                    //            + '<a class="remove-marker" data-marker-lat="' + item.lat + '" data-marker-lng="' + item.lng + '">[刪除]</a>';
+                    //    }
+                    //    else {
+                    //        //有登入不是自己的
+                    //        dbMarker.setMap(null);
+                    //        dbMarkerArrAll.push(dbMarker);
+                    //    }
+                    //}
+                    //else {
+                    //    //沒有登入
+                    //    dbMarker.setMap(map);
+                    //    dbMarkerArrAll.push(dbMarker);
+                    //}
+                    //editDeleteArea += '</div>';
 
-                    var photos = '<div>';
-                    $.each(item.photos, function (i, photo) {
-                        photos += '<img width="100px" src="' + photo.path + '" alt="' + photo.filename + '">'
-                    });
-                    photos += '</div>';
+                    //var photos = '<div>';
+                    //$.each(item.photos, function (i, photo) {
+                    //    photos += '<img width="100px" src="' + photo.path + '" alt="' + photo.filename + '">'
+                    //});
+                    //photos += '</div>';
 
-                    var editHtml = '<div id="dbMarker' + item.id + '" class="infoDiv" value="' + item.id + '">'
-                        + '<h4 class="name">' + item.name + '</h4>'
-                        + '<div>'
-                        + '<label>地址:</label>'
-                        + '<label class="address">' + item.address + '</label>'
-                        + '</div>'
-                        + '<div>'
-                        + '<label>電話:</label>'
-                        + '<label class="phonenumber">' + item.phoneNumber + '</label>'
-                        + '</div>'
-                        + '<div>'
-                        + '<label>備註:</label>'
-                        + '<p class="description">' + item.description + '</p>'
-                        + '</div>'
-                        + '<div>'
-                        + '<label>分享次數:</label>'
-                        + '<label class="sharetime">' + item.shareTime + '</label>'
-                        + '</div>'
-                        + '<div class="photos">'
-                        + photos
-                        + '</div>'
-                        + '<div>'
-                        + editDeleteArea
-                        + '</div>'
-                        + '</div> ';
+                    //var editHtml = '<div id="dbMarker' + item.id + '" class="infoDiv" value="' + item.id + '">'
+                    //    + '<h4 class="name">' + item.name + '</h4>'
+                    //    + '<div>'
+                    //    + '<label>地址:</label>'
+                    //    + '<label class="address">' + item.address + '</label>'
+                    //    + '</div>'
+                    //    + '<div>'
+                    //    + '<label>電話:</label>'
+                    //    + '<label class="phonenumber">' + item.phoneNumber + '</label>'
+                    //    + '</div>'
+                    //    + '<div>'
+                    //    + '<label>備註:</label>'
+                    //    + '<p class="description">' + item.description + '</p>'
+                    //    + '</div>'
+                    //    + '<div>'
+                    //    + '<label>分享次數:</label>'
+                    //    + '<label class="sharetime">' + item.shareTime + '</label>'
+                    //    + '</div>'
+                    //    + '<div class="photos">'
+                    //    + photos
+                    //    + '</div>'
+                    //    + '<div class="line-it-button" data-lang="zh_Hant" data-type="share-d" data-url="https://sharemaps.azurewebsites.net" style="display: none;"></div>'
+                    //    + '<div>'
+                    //    + editDeleteArea
+                    //    + '</div>'
+                    //    + '</div> ';
 
                     google.maps.event.addListener(dbMarker, 'click', function () {
-                        dbInfowindow.close();
-                        dbInfowindow = new google.maps.InfoWindow({ content: editHtml });
-                        dbInfowindow.open(map, dbMarker);
+
+
+                        $.ajax({
+                            url: '/Home/StoreInfo',
+                            success: function (data) {
+                                dbInfowindow.setContent(data);
+                                dbInfowindow.open(map, dbMarker);
+                            }
+                        });
+                        //showDbInfowindow(dbMarker, item.id);
                     });
                     countMarker();
-                }, i * 50);
+                }, i * 100);
             });
         }
+    }
+
+    function showDbInfowindow(dbMarker, storeId) {
+
+        dbInfowindow.close();
+        dbInfowindow = new google.maps.InfoWindow({ content: $('#dbInfowindow').load('/Home/StoreInfo').text() });
+        dbInfowindow.open(map, dbMarker);
+        //$.ajax({
+        //    url: '/Home/GetStoreInfo/' + storeId,
+        //    dataType: "json",
+        //    type: "GET",
+        //    contentType: 'application/json; charset=utf-8',
+        //    async: true,
+        //    processData: false,
+        //    cache: false,
+        //    success: function (result) {
+        //    },
+        //    error: function (arg) {
+        //        alert("沒有回應");
+        //    }
+        //});
     }
 
     //FilterMarker
@@ -526,6 +560,7 @@
             }
         });
     }
+
     //(顯示/隱藏)回傳的清單
     function tagMarkerVisible(resultData) {
         if (resultData) {
@@ -560,52 +595,52 @@
         var lng = $(this).data("marker-lng");
         var $activedTag = $('#list-tab').find('.active');
         $.confirm({
-            title: '提示',
-            content: '<p>是否刪除地點《' + storeName + '》?</p>',
-            buttons: {
-                cancel: {
-                    text: '取消',
-                    action: function () {
-                    }
-                },
-                confirm: {
-                    text: '確定',
-                    btnClass: 'btn btn-danger delete',
-                    action: function () {
-                        $.ajax({
-                            type: 'POST',
-                            url: '/Home/StoreDelete',
-                            data: { __RequestVerificationToken: token, id: storeId },
-                            success: function (result) {
-                                if (result) {
-                                    if (result.status) {
-                                        var dbLat = lat.toString().substring(0, 8);
-                                        var dbLng = lng.toString().substring(0, 8);
-                                        for (i = 0; i < dbMarkerArrUser.length; i++) {
-                                            var mapLat = dbMarkerArrUser[i].getPosition().lat().toString().substring(0, 8);
-                                            var mapLng = dbMarkerArrUser[i].getPosition().lng().toString().substring(0, 8);
-                                            if (mapLat == dbLat && mapLng == dbLng) {
-                                                dbMarkerArrUser[i].setMap(null);
-                                            }
-                                        }
-                                        alert(result.message);
-                                        countMarker();
-                                        SetFilterTagArea($activedTag.prop('id'));
-                                    }
-                                    else {
-                                        alert(result.message);
-                                    }
-                                }
-                                else {
-                                    alert('沒有回應');
-                                }
-                            }
-                        });
-                    }
-                }
-            }
+        title: '提示',
+        content: '<p>是否刪除地點《' + storeName + '》?</p>',
+        buttons: {
+        cancel: {
+        text: '取消',
+        action: function () {
+        }
+        },
+        confirm: {
+        text: '確定',
+        btnClass: 'btn btn-danger delete',
+        action: function () {
+        $.ajax({
+        type: 'POST',
+        url: '/Home/StoreDelete',
+        data: { __RequestVerificationToken: token, id: storeId },
+        success: function (result) {
+        if (result) {
+        if (result.status) {
+        var dbLat = lat.toString().substring(0, 8);
+        var dbLng = lng.toString().substring(0, 8);
+        for (i = 0; i < dbMarkerArrUser.length; i++) {
+        var mapLat = dbMarkerArrUser[i].getPosition().lat().toString().substring(0, 8);
+        var mapLng = dbMarkerArrUser[i].getPosition().lng().toString().substring(0, 8);
+        if (mapLat == dbLat && mapLng == dbLng) {
+        dbMarkerArrUser[i].setMap(null);
+        }
+        }
+        alert(result.message);
+        countMarker();
+        SetFilterTagArea($activedTag.prop('id'));
+        }
+        else {
+        alert(result.message);
+        }
+        }
+        else {
+        alert('沒有回應');
+        }
+        }
         });
-    });
-</script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWkE_DUPpXUIGPeO9MpePyT4tUabnUvxk&callback=initMap">
-</script>
+        }
+        }
+        }
+        });
+        });
+        </script>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWkE_DUPpXUIGPeO9MpePyT4tUabnUvxk&callback=initMap">
+        </script>
