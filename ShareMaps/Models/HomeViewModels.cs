@@ -9,8 +9,11 @@ namespace ShareMaps.Models
 {
     public class HomeIndexViewModel
     {
-        public List<StoreEditDeleteViewModel> stores { get; set; }
+        public List<StoreStatusViewModel> stores { get; set; }
+
         public List<TagCountViewModel> tags { get; set; }
+
+        public bool myStore { get; set; }
     }
 
     public class StoreCreateViewModel

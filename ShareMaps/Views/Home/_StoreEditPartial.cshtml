@@ -70,7 +70,6 @@
 
 <script>
     var $files = $('#photos');
-
     var urls = [];
     @foreach (var item in Model.storePhotos)
     {
@@ -93,28 +92,6 @@
     jsonData = @MvcHtmlString.Create(jData);
     </Text>
      }
-
-    @*var iniJson;
-    @{
-        var iniConfig = from sp in Model.storePhotos
-                        select new
-                        {
-                            initialPreview = Url.Content("~" + sp.Path),
-                            initialPreviewConfig = new[] {
-                                    new {
-                                        caption = Path.GetFileName(sp.Path),
-                                        url = Url.Action("FileDelete", "Home", new { id = sp.Id }),
-                                        key =Path.GetFileName(sp.Path),
-                                        width = "120px"
-                                    }
-                                },
-                            append = true
-                        };
-        <Text>
-    iniJson = @MvcHtmlString.Create(Json.Encode(iniConfig));
-    </Text>
-        }*@
-
 
     $files.fileinput({
         language: "zh-TW",
@@ -140,12 +117,12 @@
         var result = data.responseJSON;
     });
     
+    var storeId = '@Model.store.Id';
     //會POST到Controller
     //要加入前端驗證
     $("#FormStoreEdit").submit(function (e) {
         e.preventDefault();
         var formData = new FormData(this);
-
         $.ajax({
             url: '@Url.Action("StoreEdit")',
             type: 'POST',
@@ -154,31 +131,13 @@
             contentType: false,
             processData: false,
             success: function (result) {
-                if (result) {
-                    if (result.status) {
-                        $('#FormStoreEdit')[0].reset();
-                        $('#ModalStoreManage').modal('hide');
-                        var photos = '<div>';
-                        $.each(result.data.photos, function (i, item) {
-                            photos += '<img width="100px" src="' + item.path + '" alt="' + item.filename + '">'
-                        });
-                        photos += '</div>';
-                        var dbMarker = $('#dbMarker' + result.data.id);
-                        dbMarker.find('h4').text(result.data.name);
-                        dbMarker.find('.address').text(result.data.address);
-                        dbMarker.find('.phonenumber').text(result.data.phonenumber);
-                        dbMarker.find('.description').html(result.data.description);
-                        dbMarker.find('.sharetime').text(result.data.sharetime);
-                        dbMarker.find('.photos').html(photos);
-                        showCurrentTagMarker();
-                    }
-                    else {
-                        alert(result.message);
-                    }
-                }
-                else {
-                    alert(result.message);
-                }
+                $('#FormStoreEdit')[0].reset();
+                $('#ModalStoreManage').modal('hide');
+                var dbMarker = $('#dbMarker' + storeId);
+                dbMarker.html(result);
+                //重新載入Line-it
+                LineIt.loadButton();
+                showCurrentTagMarker();
             }
         });
     });

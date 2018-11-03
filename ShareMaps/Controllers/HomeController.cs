@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNet.Identity;
-using Newtonsoft.Json;
 using ShareMaps.Helpers;
 using ShareMaps.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace ShareMaps.Controllers
@@ -20,12 +18,13 @@ namespace ShareMaps.Controllers
                 string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
                 HomeIndexViewModel homeIndexViewModel = new HomeIndexViewModel();
                 homeIndexViewModel.stores = (from s in sme.Stores
-                                             select new StoreEditDeleteViewModel()
+                                             select new StoreStatusViewModel
                                              {
-                                                 canEditDelete = s.UserId.Equals(userId) ? true : false,
-                                                 store = s,
-                                                 storePhotos = s.Photos.ToList(),
-                                                 storeTags = s.Tags.ToList()
+                                                 id = s.Id,
+                                                 name = s.Name,
+                                                 lat = s.Lat,
+                                                 lng = s.Lng,
+                                                 myStore = s.UserId.Equals(userId) ? true : false
                                              }).ToList();
                 homeIndexViewModel.tags = (from t in sme.Tags
                                            where t.UserId.Equals(userId)
@@ -105,61 +104,52 @@ namespace ShareMaps.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        // GET: Home/GetStoreInfo
-        [HttpGet]
-        public JsonResult GetStoreInfo(string id)
+        // GET: Home/StoreInfo
+        public ActionResult StoreInfo(string id)
         {
             using (var sme = new ShareMapsEntities())
             {
-                JsonHelper jsonHelper = new JsonHelper();
-                try
+                string userId = User.Identity.GetUserId() != null ? User.Identity.GetUserId() : string.Empty;
+                Stores store = sme.Stores.Find(id);
+                StoreInfoViewModel storeInfo = new StoreInfoViewModel();
+                storeInfo.canEditDelete = store.UserId.Equals(userId) ? true : false;
+                storeInfo.store = new StoreViewModel()
                 {
-                    Stores stores = sme.Stores.Find(id);
-                    var store = new StoreInfoViewModel
-                    {
-                        store = new StoreViewModel
-                        {
-                            id = stores.Id,
-                            name = stores.Name,
-                            address = stores.Address,
-                            phoneNumber = stores.PhoneNumber,
-                            description = stores.Description,
-                            lat = stores.Lat,
-                            lng = stores.Lng,
-                            shareTime = stores.ShareTime
-                        },
-                        storePhotos = (from p in stores.Photos
-                                       select new PhotoViewModel
+                    id = store.Id,
+                    name = store.Name,
+                    address = store.Address,
+                    phoneNumber = store.PhoneNumber,
+                    description = store.Description,
+                    lat = store.Lat,
+                    lng = store.Lng,
+                    shareTime = store.ShareTime
+                };
+                storeInfo.storePhotos = (from sp in store.Photos
+                                         select new PhotoViewModel
+                                         {
+                                             id = sp.Id,
+                                             path = sp.Path,
+                                             isMain = sp.IsMain,
+                                             sequence = sp.Sequence
+                                         }).ToList();
+                storeInfo.storeTags = (from st in store.Tags
+                                       select new IconTagViewModel
                                        {
-                                           id = p.Id,
-                                           path = p.Path,
-                                           isMain = p.IsMain,
-                                           sequence = p.Sequence
-                                       }).ToList(),
-                        storeTags = (from t in stores.Tags
-                                     select new TagViewModel
-                                     {
-                                         id = t.Id,
-                                         name = t.Name
-                                     }).ToList()
-                    };
-                    jsonHelper.data = store;
-                    jsonHelper.status = true;
-                    jsonHelper.message = "資料取得成功";
-                    return Json(jsonHelper, JsonRequestBehavior.AllowGet);
-                }
-                catch
+                                           tag = st,
+                                           icon = (from i in sme.Icons
+                                                   where i.Id.Equals(st.IconId)
+                                                   select i).FirstOrDefault()
+                                       }).ToList();
+                if (storeInfo.storeTags.Count.Equals(0))
                 {
-                    jsonHelper.status = false;
-                    jsonHelper.message = "資料取得錯誤";
-                    return Json(jsonHelper, JsonRequestBehavior.AllowGet);
+                    storeInfo.storeTags.Add(new IconTagViewModel
+                    {
+                        tag = null,
+                        icon = sme.Icons.Find(1)
+                    });
                 }
+                return PartialView("_StoreInfoPartial", storeInfo);
             }
-        }
-
-        public ActionResult StoreInfo()
-        {
-            return PartialView("_StoreInfoPartial");
         }
 
         public ActionResult About()
@@ -450,27 +440,15 @@ namespace ShareMaps.Controllers
 
                             jsonHelper.status = true;
                             jsonHelper.message = "新增成功";
-                            jsonHelper.data = new []
+                            jsonHelper.data = new[]
                             {
                                 new
                                 {
-                                    canEditDelete = true,
                                     id = stores.Id,
                                     name = stores.Name,
-                                    address = stores.Address,
-                                    phoneNumber = stores.PhoneNumber,
-                                    description = string.IsNullOrEmpty(stores.Description) ? "" : stores.Description.Replace("\r\n", "<br />"),
-                                    shareTime = stores.ShareTime,
                                     lat = stores.Lat,
                                     lng = stores.Lng,
-                                    photos = from sp in stores.Photos
-                                             select new
-                                             {
-                                                filename = Path.GetFileName(sp.Path),
-                                                path = Url.Content("~" + sp.Path),
-                                                isMain = sp.IsMain,
-                                                sequence = sp.Sequence
-                                             }
+                                    myStore = true
                                 }
                             };
                             return Json(jsonHelper);
@@ -524,61 +502,38 @@ namespace ShareMaps.Controllers
         {
             if (Request.IsAuthenticated)
             {
-                JsonHelper jsonHelper = new JsonHelper();
                 if (ModelState.IsValid)
                 {
                     using (var sme = new ShareMapsEntities())
                     {
                         try
                         {
-                            Stores stores = sme.Stores.Find(storeEditViewModel.store.Id);
+                            Stores store = sme.Stores.Find(storeEditViewModel.store.Id);
                             string userId = User.Identity.GetUserId();
-                            if (stores.UserId.Equals(userId))
+                            if (store.UserId.Equals(userId))
                             {
-                                stores.Name = storeEditViewModel.store.Name;
-                                stores.Address = storeEditViewModel.store.Address;
-                                stores.PhoneNumber = storeEditViewModel.store.PhoneNumber;
-                                stores.Description = storeEditViewModel.store.Description;
-                                stores.Lat = storeEditViewModel.store.Lat;
-                                stores.Lng = storeEditViewModel.store.Lng;
-                                stores.UpdateDate = DateTime.Now;
-                                stores.UserId = userId;
+                                store.Name = storeEditViewModel.store.Name;
+                                store.Address = storeEditViewModel.store.Address;
+                                store.PhoneNumber = storeEditViewModel.store.PhoneNumber;
+                                store.Description = storeEditViewModel.store.Description;
+                                store.Lat = storeEditViewModel.store.Lat;
+                                store.Lng = storeEditViewModel.store.Lng;
+                                store.UpdateDate = DateTime.Now;
+                                store.UserId = userId;
 
                                 if (storeEditViewModel.storeTags != null)
                                 {
-                                    stores.Tags.Clear();
+                                    store.Tags.Clear();
                                     var checkedTag = (from st in storeEditViewModel.storeTags
                                                       where st.isChecked.Equals(true)
                                                       select st.tag.Id).ToList();
-                                    stores.Tags = (from t in sme.Tags
-                                                   where checkedTag.Contains(t.Id) &&
-                                                   t.UserId.Equals(stores.UserId)
-                                                   select t).ToList();
+                                    store.Tags = (from t in sme.Tags
+                                                  where checkedTag.Contains(t.Id) &&
+                                                  t.UserId.Equals(store.UserId)
+                                                  select t).ToList();
                                 }
                                 sme.SaveChanges();
-
-                                jsonHelper.status = true;
-                                jsonHelper.message = "修改成功";
-                                jsonHelper.data = new
-                                {
-                                    id = stores.Id,
-                                    name = stores.Name,
-                                    address = stores.Address,
-                                    phonenumber = stores.PhoneNumber,
-                                    description = string.IsNullOrEmpty(stores.Description) ? "" : stores.Description.Replace("\r\n", "<br />"),
-                                    lat = stores.Lat,
-                                    lng = stores.Lng,
-                                    sharetime = stores.ShareTime,
-                                    photos = from sp in stores.Photos
-                                             select new
-                                             {
-                                                 filename = Path.GetFileName(sp.Path),
-                                                 path = Url.Content("~" + sp.Path),
-                                                 isMain = sp.IsMain,
-                                                 sequence = sp.Sequence
-                                             }
-                                };
-                                return Json(jsonHelper);
+                                return StoreInfo(store.Id);
                             }
                             else
                             {
@@ -587,15 +542,10 @@ namespace ShareMaps.Controllers
                         }
                         catch
                         {
-                            jsonHelper.status = false;
-                            jsonHelper.message = "修改過程出現問題";
-                            return Json(jsonHelper);
+                            return RedirectToAction("Index");
                         }
                     }
                 }
-                jsonHelper.status = false;
-                jsonHelper.message = "驗證出現問題";
-                return Json(jsonHelper);
             }
             return RedirectToAction("Login", "Account");
         }

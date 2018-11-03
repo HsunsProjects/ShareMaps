@@ -23,15 +23,18 @@ namespace ShareMaps.Models
 
         public int shareTime { get; set; }
     }
-    public class StoreEditDeleteViewModel
+
+    public class StoreStatusViewModel
     {
-        public bool canEditDelete { get; set; }
+        public string id { get; set; }
 
-        public Stores store { get; set; }
+        public string name { get; set; }
 
-        public List<Photos> storePhotos { get; set; }
+        public decimal lat { get; set; }
 
-        public List<Tags> storeTags { get; set; }
+        public decimal lng { get; set; }
+
+        public bool myStore { get; set; }
     }
 
     public class StoreInfoViewModel
@@ -42,6 +45,6 @@ namespace ShareMaps.Models
 
         public List<PhotoViewModel> storePhotos { get; set; }
 
-        public List<TagViewModel> storeTags { get; set; }
+        public List<IconTagViewModel> storeTags { get; set; }
     }
 }

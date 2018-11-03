@@ -14,6 +14,12 @@
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
 <script src="https://d.line-scdn.net/r/web/social-plugin/js/thirdparty/loader.min.js" async="async" defer="defer"></script>
+
+<meta property="og:title" content="XHTML like">
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://example.com/">
+<meta property="og:image" content="http://example.com/ogp.png">
+
 <div class="row">
     @if (Request.IsAuthenticated)
     {
@@ -96,9 +102,6 @@
     </div>
 </div>
 
-<div id="dbInfowindow">
-</div>
-
 <script>
     function w3_open() {
         document.getElementById("main").style.marginLeft = "25%";
@@ -114,7 +117,6 @@
 </script>
 
 <script>
-
     $('#ModalTagsManage').on("shown.bs.modal", function () {
         //$(this).hide().show();
     });
@@ -168,9 +170,7 @@
 
 @*GoogleMap Api*@
 <script>
-    var map, currentMarker, targetMarker, targetInfoWindow, targetLatLng;
-    //1 = open; -1 = close;
-    var targetInfowindow = 1;
+    var map, currentMarker, targetMarker, targetInfoWindow, targetLatLng, dbInfowindow;
     function initMap() {
         //default 台北火車站 (121.5142306, 25.0487345)
         targetLatLng = { lat: 25.0487345, lng: 121.5142306 };
@@ -178,6 +178,11 @@
             center: targetLatLng,
             zoom: 16,
             mapTypeControl: false
+        });
+
+        dbInfowindow = new google.maps.InfoWindow({ content: '' });
+        google.maps.event.addListener(dbInfowindow, 'domready', function () {
+            LineIt.loadButton();
         });
 
         @if (Request.IsAuthenticated)
@@ -191,20 +196,17 @@
                 animation: google.maps.Animation.DROP
             });
 
-                //綁定目標標記的InfoWindow
-            infowindow = new google.maps.InfoWindow({
+            //綁定目標標記的InfoWindow
+            targetInfoWindow = new google.maps.InfoWindow({
                 content: '<a id="LinkStoreCreate" data-toggle="modal" data-target="#ModalStoreManage" href="@Url.Action("StoreCreate", new { Lat = "25.0487345", Lng = "121.5142306", Address = "103台灣台北市大同區鄭州路8號" })">新增</a>'
             });
-            infowindow.open(map, targetMarker);
+            targetInfoWindow.open(map, targetMarker);
 
-                //targetMarker 拖拉事件
+            //targetMarker 拖拉事件
             google.maps.event.addListener(targetMarker, 'dragend', function () {
-                //if (targetInfowindow < 0) {
-                //    targetInfowindow = 1;
-                //    infowindow.open(map, targetMarker);
-                //}
                 latLngToAddress(targetMarker.getPosition());
             });
+
             google.maps.event.addListener(targetMarker, 'click', function () {
                 infowindow.close();
                 infowindow.open(map, targetMarker);
@@ -238,15 +240,15 @@
                     position: targetLatLng,
                     title: '你的位置',
                     icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
+                        path: google.maps.SymbolPath.CIRCLE,
                         strokeColor: '#4169E1',
                         strokeWeight: 5,
                         fillOpacity: 1,
                         scale: 1
                     }
-            });
-            latLngToAddress(targetLatLng);
-            @if (Request.IsAuthenticated)
+                });
+                latLngToAddress(targetLatLng);
+                @if (Request.IsAuthenticated)
                 {
                     @:targetMarkerSetting(targetLatLng);
                 }
@@ -274,27 +276,15 @@
             var jsonData = new
             {
                 status = true,
-                message = "新增成功",
+                message = "",
                 data = from s in Model.stores
                        select new
                        {
-                           canEditDelete = s.canEditDelete,
-                           id = s.store.Id,
-                           name = s.store.Name,
-                           address = s.store.Address,
-                           phoneNumber = s.store.PhoneNumber,
-                           description = Html.Encode(s.store.Description).Replace(Environment.NewLine, "<br />"),
-                           shareTime = s.store.ShareTime,
-                           lat = s.store.Lat,
-                           lng = s.store.Lng,
-                           photos = from p in s.storePhotos
-                                    select new
-                                    {
-                                        filename = Path.GetFileName(p.Path),
-                                        path = Url.Content("~" + p.Path),
-                                        isMain = p.IsMain,
-                                        sequence = p.Sequence
-                                    }
+                           id = s.id,
+                           name = s.name,
+                           lat = s.lat,
+                           lng = s.lng,
+                           myStore = s.myStore
                        }
 
             };
@@ -373,111 +363,44 @@
 
     var dbMarkerArrAll = [];
     var dbMarkerArrUser = [];
-    var dbInfowindow;
+
     function createDbMarker(isAuthenticated, data) {
         if (data.status) {
-            dbInfowindow = new google.maps.InfoWindow({ content: '' });
             $.each(data.data, function (i, item) {
-                window.setTimeout(function () {
-                    var dbMarker = new google.maps.Marker({
-                        position: new google.maps.LatLng(item.lat, item.lng),
-                        map: map,
-                        title: item.name,
-                        icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                        animation: google.maps.Animation.DROP
+                var dbMarker = new google.maps.Marker({
+                    position: new google.maps.LatLng(item.lat, item.lng),
+                    map: map,
+                    title: item.name
+                });
+
+                if (isAuthenticated) {
+                    if (item.myStore) {
+                        dbMarker.setMap(map);
+                        dbMarkerArrUser.push(dbMarker);
+                    }
+                    else {
+                        dbMarker.setMap(null);
+                        dbMarkerArrAll.push(dbMarker);
+                    }
+                }
+                else {
+                    //沒有登入
+                    dbMarker.setMap(map);
+                    dbMarkerArrAll.push(dbMarker);
+                }
+
+                google.maps.event.addListener(dbMarker, 'click', function () {
+                    $.ajax({
+                        url: '/Home/StoreInfo/' + item.id,
+                        success: function (data) {
+                            dbInfowindow.setContent(data);
+                            dbInfowindow.open(map, dbMarker);
+                        }
                     });
-                    //var editDeleteArea = '<div>';
-                    //if (isAuthenticated) {
-                    //    if (item.canEditDelete) {
-                    //        //有登入又是自己的
-                    //        dbMarker.setMap(map);
-                    //        dbMarkerArrUser.push(dbMarker);
-                    //        editDeleteArea = '<a data-toggle="modal" data-target="#ModalStoreManage" href="/Home/StoreEdit/' + item.id + '">[編輯]</a>'
-                    //            + '<a class="remove-marker" data-marker-lat="' + item.lat + '" data-marker-lng="' + item.lng + '">[刪除]</a>';
-                    //    }
-                    //    else {
-                    //        //有登入不是自己的
-                    //        dbMarker.setMap(null);
-                    //        dbMarkerArrAll.push(dbMarker);
-                    //    }
-                    //}
-                    //else {
-                    //    //沒有登入
-                    //    dbMarker.setMap(map);
-                    //    dbMarkerArrAll.push(dbMarker);
-                    //}
-                    //editDeleteArea += '</div>';
-
-                    //var photos = '<div>';
-                    //$.each(item.photos, function (i, photo) {
-                    //    photos += '<img width="100px" src="' + photo.path + '" alt="' + photo.filename + '">'
-                    //});
-                    //photos += '</div>';
-
-                    //var editHtml = '<div id="dbMarker' + item.id + '" class="infoDiv" value="' + item.id + '">'
-                    //    + '<h4 class="name">' + item.name + '</h4>'
-                    //    + '<div>'
-                    //    + '<label>地址:</label>'
-                    //    + '<label class="address">' + item.address + '</label>'
-                    //    + '</div>'
-                    //    + '<div>'
-                    //    + '<label>電話:</label>'
-                    //    + '<label class="phonenumber">' + item.phoneNumber + '</label>'
-                    //    + '</div>'
-                    //    + '<div>'
-                    //    + '<label>備註:</label>'
-                    //    + '<p class="description">' + item.description + '</p>'
-                    //    + '</div>'
-                    //    + '<div>'
-                    //    + '<label>分享次數:</label>'
-                    //    + '<label class="sharetime">' + item.shareTime + '</label>'
-                    //    + '</div>'
-                    //    + '<div class="photos">'
-                    //    + photos
-                    //    + '</div>'
-                    //    + '<div class="line-it-button" data-lang="zh_Hant" data-type="share-d" data-url="https://sharemaps.azurewebsites.net" style="display: none;"></div>'
-                    //    + '<div>'
-                    //    + editDeleteArea
-                    //    + '</div>'
-                    //    + '</div> ';
-
-                    google.maps.event.addListener(dbMarker, 'click', function () {
-
-
-                        $.ajax({
-                            url: '/Home/StoreInfo',
-                            success: function (data) {
-                                dbInfowindow.setContent(data);
-                                dbInfowindow.open(map, dbMarker);
-                            }
-                        });
-                        //showDbInfowindow(dbMarker, item.id);
-                    });
-                    countMarker();
-                }, i * 100);
+                });
+                countMarker();
             });
         }
-    }
-
-    function showDbInfowindow(dbMarker, storeId) {
-
-        dbInfowindow.close();
-        dbInfowindow = new google.maps.InfoWindow({ content: $('#dbInfowindow').load('/Home/StoreInfo').text() });
-        dbInfowindow.open(map, dbMarker);
-        //$.ajax({
-        //    url: '/Home/GetStoreInfo/' + storeId,
-        //    dataType: "json",
-        //    type: "GET",
-        //    contentType: 'application/json; charset=utf-8',
-        //    async: true,
-        //    processData: false,
-        //    cache: false,
-        //    success: function (result) {
-        //    },
-        //    error: function (arg) {
-        //        alert("沒有回應");
-        //    }
-        //});
     }
 
     //FilterMarker
@@ -595,52 +518,54 @@
         var lng = $(this).data("marker-lng");
         var $activedTag = $('#list-tab').find('.active');
         $.confirm({
-        title: '提示',
-        content: '<p>是否刪除地點《' + storeName + '》?</p>',
-        buttons: {
-        cancel: {
-        text: '取消',
-        action: function () {
-        }
-        },
-        confirm: {
-        text: '確定',
-        btnClass: 'btn btn-danger delete',
-        action: function () {
-        $.ajax({
-        type: 'POST',
-        url: '/Home/StoreDelete',
-        data: { __RequestVerificationToken: token, id: storeId },
-        success: function (result) {
-        if (result) {
-        if (result.status) {
-        var dbLat = lat.toString().substring(0, 8);
-        var dbLng = lng.toString().substring(0, 8);
-        for (i = 0; i < dbMarkerArrUser.length; i++) {
-        var mapLat = dbMarkerArrUser[i].getPosition().lat().toString().substring(0, 8);
-        var mapLng = dbMarkerArrUser[i].getPosition().lng().toString().substring(0, 8);
-        if (mapLat == dbLat && mapLng == dbLng) {
-        dbMarkerArrUser[i].setMap(null);
-        }
-        }
-        alert(result.message);
-        countMarker();
-        SetFilterTagArea($activedTag.prop('id'));
-        }
-        else {
-        alert(result.message);
-        }
-        }
-        else {
-        alert('沒有回應');
-        }
-        }
+            title: '提示',
+            content: '<p>是否刪除地點《' + storeName + '》?</p>',
+            buttons: {
+                cancel: {
+                    text: '取消',
+                    action: function () {
+                    }
+                },
+                confirm: {
+                    text: '確定',
+                    btnClass: 'btn btn-danger delete',
+                    action: function () {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Home/StoreDelete',
+                            data: { __RequestVerificationToken: token, id: storeId },
+                            success: function (result) {
+                                if (result) {
+                                    if (result.status) {
+                                        var dbLat = lat.toString().substring(0, 8);
+                                        var dbLng = lng.toString().substring(0, 8);
+                                        for (i = 0; i < dbMarkerArrUser.length; i++) {
+                                            var mapLat = dbMarkerArrUser[i].getPosition().lat().toString().substring(0, 8);
+                                            var mapLng = dbMarkerArrUser[i].getPosition().lng().toString().substring(0, 8);
+                                            if (mapLat == dbLat && mapLng == dbLng) {
+                                                dbMarkerArrUser[i].setMap(null);
+                                                dbMarkerArrUser.splice(i, 1);
+                                                break;
+                                            }
+                                        }
+                                        alert(result.message);
+                                        countMarker();
+                                        SetFilterTagArea($activedTag.prop('id'));
+                                    }
+                                    else {
+                                        alert(result.message);
+                                    }
+                                }
+                                else {
+                                    alert('沒有回應');
+                                }
+                            }
+                        });
+                    }
+                }
+            }
         });
-        }
-        }
-        }
-        });
-        });
-        </script>
-        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWkE_DUPpXUIGPeO9MpePyT4tUabnUvxk&callback=initMap">
-        </script>
+    });
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWkE_DUPpXUIGPeO9MpePyT4tUabnUvxk&callback=initMap">
+</script>

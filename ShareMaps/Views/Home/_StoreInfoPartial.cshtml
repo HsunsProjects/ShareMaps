@@ -1,32 +1,52 @@
-﻿
+﻿@model ShareMaps.Models.StoreInfoViewModel
 
-<div class="infoDiv">
-    <h4 class="name"></h4>
+<div id="dbMarker@(Model.store.id)" class="infoDiv" value ="@Model.store.id">
+    <h4 class="name">@Model.store.name</h4>
+    <div class="icons">
+        <div>
+            @foreach (var tag in Model.storeTags)
+            {
+                <i id="icon" class="@tag.icon.Value"></i>
+            }
+        </div>
+    </div>
     <div>
         <label>地址:</label>
-        <label class="address"></label>
+        <label class="address">@Model.store.address</label>
     </div>
     <div>
         <label>電話:</label>
-        <label class="phonenumber"></label>
+        <label class="phonenumber">@Model.store.phoneNumber</label>
     </div>
     <div>
         <label>備註:</label>
-        <p class="description"></p>
+        <p class="description">@Model.store.description</p>
     </div>
     <div>
         <label>分享次數:</label>
-        <label class="sharetime"></label>
+        <label class="sharetime">@Model.store.shareTime</label>
     </div>
     <div class="photos">
+        <div>
+            @foreach (var photo in Model.storePhotos)
+            {
+                <img width="100" src="@photo.path" alt="@Path.GetFileName(photo.path)">
+            }
+        </div>
     </div>
     <div class="socialApp">
         <div>
             <label>分享到:</label>
         </div>
-        <div id="line"></div>
-        <div class="line-it-button" data-lang="zh_Hant" data-type="share-d" data-url="https://sharemaps.azurewebsites.net" style="display: none;"></div>
+        <div id="line">
+            <div class="line-it-button" data-lang="zh_Hant" data-type="share-d" data-url="@Url.Action("StoreDetail", "Home", new { id = @Model.store.id }, Request.Url.Scheme)" style="display: none;"></div>
+        </div>
     </div>
+    @if (Model.canEditDelete)
+    {
     <div class="editDeleteArea">
+        <a data-toggle="modal" data-target="#ModalStoreManage" href="@Url.Action("StoreEdit", new { id = Model.store.id })">[編輯]</a>
+        <a class="remove-marker" data-marker-lat="@Model.store.lat" data-marker-lng="@Model.store.lng">[刪除]</a>
     </div>
+    }
 </div>
